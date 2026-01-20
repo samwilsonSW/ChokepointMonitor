@@ -1,4 +1,5 @@
 from parseACLED import read_excel_file
+from pullYFinanceData import get_chokepoint_data
 from pathlib import Path
 import re
 
@@ -34,5 +35,10 @@ def main():
     # test commit
 
 
+def main2(): 
+    print(get_chokepoint_data())
+
+
 if __name__ == "__main__":
-    main()
+    #main()
+    main2()

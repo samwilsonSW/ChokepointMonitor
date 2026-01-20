@@ -1,0 +1,5 @@
+pandas
+yfinance
+openpyxl
+supabase
+python-dotenv
