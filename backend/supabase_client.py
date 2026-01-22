@@ -3,6 +3,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from supabase import create_client, Client
 from typing import Optional
+from datetime import date, datetime
+import pandas as pd
 
 # Using pathlib for cleaner cross-platform pathing
 # This looks for the .env in the same folder as this script
@@ -109,14 +111,22 @@ def delete_data(table: str, record_id: int):
 
 ## Separator for helper functions 
 
-from datetime import date, datetime
-import pandas as pd
 
 def serialize_for_json(obj):
+    #Handle null/NaN values (empty cells)
+    if pd.isna(obj):
+        return None
+    
+    # 2. Handle Floats that are actually Integers
+    if isinstance(obj, float) and obj.is_integer():
+        return int(obj)
+
+    #Handle dates to convert to mm/dd/yyyy format
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
     if isinstance(obj, pd.Timestamp):
         return obj.isoformat()
+    
     return obj
 
 

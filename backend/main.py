@@ -59,4 +59,4 @@ def run_import(filename: str, min_year: int = 2023, table_name: str = 'ACLED-Agg
 
 
 if __name__ == "__main__":
-    run_import("datasets/Africa_aggregated_data_up_to-2025-12-27.xlsx", min_year=2023)
+    run_import("datasets/Middle-East_aggregated_data_up_to-2025-12-27.xlsx", min_year=2023)
