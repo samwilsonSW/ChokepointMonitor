@@ -1,68 +1,104 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 from supabase import create_client, Client
+from typing import Optional
 
-# Load environment variables from .env file
-load_dotenv()
+# Using pathlib for cleaner cross-platform pathing
+# This looks for the .env in the same folder as this script
+BASE_DIR = Path(__file__).resolve().parent
+ENV_PATH = BASE_DIR / ".env"
 
-# Get Supabase credentials from environment variables
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+load_dotenv(dotenv_path=ENV_PATH)
 
-# Validate that credentials are set
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise ValueError("SUPABASE_URL and SUPABASE_KEY must be set in environment variables")
+print("ENV_PATH exists:", ENV_PATH.exists())
+print("Reading from:", ENV_PATH)
+print("SUPABASE_URL =", repr(os.getenv("SUPABASE_URL")))
+print("SUPABASE_KEY =", repr(os.getenv("SUPABASE_KEY")))
 
-# Initialize Supabase client
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+_supabase: Optional[Client] = None
 
+def _get_client() -> Client:
+    """Lazily initialize and return a Supabase Client."""
+    global _supabase
+    if _supabase is None:
+        url = os.getenv("SUPABASE_URL")
+        key = os.getenv("SUPABASE_KEY")
+
+        # If OS environment is empty, manually parse the file
+        if not url or not key:
+            if ENV_PATH.exists():
+                with open(ENV_PATH, "r", encoding="utf-8") as f:
+                    for line in f:
+                        # Clean up the line: remove whitespace and ignore comments
+                        line = line.strip()
+                        if not line or line.startswith("#"):
+                            continue
+                        
+                        # Split by the first '=' found
+                        if "=" in line:
+                            k, v = line.split("=", 1)
+                            # Remove any surrounding quotes or spaces from the value
+                            clean_v = v.strip().strip("'").strip('"')
+                            if k.strip() == "SUPABASE_URL":
+                                url = clean_v
+                            elif k.strip() == "SUPABASE_KEY":
+                                key = clean_v
+
+        if not url or not key:
+            # Final fail-safe diagnostic
+            print(f"DEBUG: File exists at {ENV_PATH}")
+            if ENV_PATH.exists():
+                with open(ENV_PATH, 'r') as f:
+                    print(f"DEBUG: Raw file content starts with: {f.read(10)}...")
+            raise ValueError(f"Failed to parse SUPABASE_URL/KEY from {ENV_PATH}")
+
+        _supabase = create_client(url, key)
+    return _supabase
 
 def insert_data(table: str, data: dict):
-    """Insert a record into a Supabase table"""
     try:
-        response = supabase.table(table).insert(data).execute()
+        client = _get_client()
+        response = client.table(table).insert(data).execute()
         return response.data
     except Exception as e:
         print(f"Error inserting data: {e}")
         raise
 
-
 def query_data(table: str, filters: dict = None):
-    """Query data from a Supabase table with optional filters"""
     try:
-        query = supabase.table(table).select("*")
-        
+        client = _get_client()
+        query = client.table(table).select("*")
         if filters:
             for key, value in filters.items():
                 query = query.eq(key, value)
-        
         response = query.execute()
         return response.data
     except Exception as e:
         print(f"Error querying data: {e}")
         raise
 
-
 def update_data(table: str, record_id: int, data: dict):
-    """Update a record in a Supabase table"""
     try:
-        response = supabase.table(table).update(data).eq("id", record_id).execute()
+        client = _get_client()
+        response = client.table(table).update(data).eq("id", record_id).execute()
         return response.data
     except Exception as e:
         print(f"Error updating data: {e}")
         raise
 
-
 def delete_data(table: str, record_id: int):
-    """Delete a record from a Supabase table"""
     try:
-        response = supabase.table(table).delete().eq("id", record_id).execute()
+        client = _get_client()
+        response = client.table(table).delete().eq("id", record_id).execute()
         return response.data
     except Exception as e:
         print(f"Error deleting data: {e}")
         raise
 
-
 if __name__ == "__main__":
-    # Example usage
-    print("Supabase client initialized successfully!")
+    try:
+        _get_client()
+        print("Supabase client initialized successfully!")
+    except Exception as e:
+        print(f"Initialization failed: {e}")
