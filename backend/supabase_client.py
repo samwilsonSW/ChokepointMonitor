@@ -11,10 +11,10 @@ ENV_PATH = BASE_DIR / ".env"
 
 load_dotenv(dotenv_path=ENV_PATH)
 
-print("ENV_PATH exists:", ENV_PATH.exists())
-print("Reading from:", ENV_PATH)
-print("SUPABASE_URL =", repr(os.getenv("SUPABASE_URL")))
-print("SUPABASE_KEY =", repr(os.getenv("SUPABASE_KEY")))
+# print("ENV_PATH exists:", ENV_PATH.exists())
+# print("Reading from:", ENV_PATH)
+# print("SUPABASE_URL =", repr(os.getenv("SUPABASE_URL")))
+# print("SUPABASE_KEY =", repr(os.getenv("SUPABASE_KEY")))
 
 _supabase: Optional[Client] = None
 
@@ -55,15 +55,25 @@ def _get_client() -> Client:
 
         _supabase = create_client(url, key)
     return _supabase
-
-def insert_data(table: str, data: dict):
+def insert_data(table: str, data):
     try:
         client = _get_client()
+
+        if isinstance(data, list):
+            data = [
+                {k: serialize_for_json(v) for k, v in row.items()}
+                for row in data
+            ]
+        else:
+            data = {k: serialize_for_json(v) for k, v in data.items()}
+
         response = client.table(table).insert(data).execute()
         return response.data
+
     except Exception as e:
         print(f"Error inserting data: {e}")
         raise
+
 
 def query_data(table: str, filters: dict = None):
     try:
@@ -95,6 +105,20 @@ def delete_data(table: str, record_id: int):
     except Exception as e:
         print(f"Error deleting data: {e}")
         raise
+
+
+## Separator for helper functions 
+
+from datetime import date, datetime
+import pandas as pd
+
+def serialize_for_json(obj):
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    if isinstance(obj, pd.Timestamp):
+        return obj.isoformat()
+    return obj
+
 
 if __name__ == "__main__":
     try:
