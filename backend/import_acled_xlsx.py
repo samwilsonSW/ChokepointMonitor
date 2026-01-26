@@ -2,20 +2,19 @@ import math
 from typing import List
 
 import pandas as pd
+from supabase_client import insert_data, _get_client
 
-from supabase_client import insert_data
-
-
-def import_and_publish(filename: str, table_name: str = 'ACLED-Aggregated-Conflict-Data', batch_size: int = 500, min_year: int = 2023):
-    """Read an XLSX file and publish its rows to Supabase.
-
-    - `filename` is the path to the Excel file.
-    - `table_name` is the Supabase table to insert into.
-    - `batch_size` controls how many records to insert per request.
-
-    The function maps XLSX columns to DB columns, normalizes types, and
-    inserts records in batches using `supabase_client.insert_data`.
-    """
+def import_and_publish_no_duplicate(filename: str, table_name: str = 'ACLED-Aggregated-Conflict-Data', batch_size: int = 500, min_year: int = 2023):
+    #Set identifier for which ACLED data file we are uplaoding, region field is not reliable enough so we must add this
+    from_spreadsheet = ""     
+    filename_lower = filename.lower()
+    if 'africa' in filename_lower:
+        from_spreadsheet = 'Africa'
+    elif 'asia' in filename_lower and 'pacific' in filename_lower:
+        from_spreadsheet = 'Asia Pacific'
+    elif 'middle' in filename_lower:
+        from_spreadsheet = 'Middle East'
+    
     # Expected mapping from spreadsheet headers to DB column names
     mapping = {
         'WEEK': 'week',
@@ -31,28 +30,50 @@ def import_and_publish(filename: str, table_name: str = 'ACLED-Aggregated-Confli
         'ID': 'acled_id',
         'CENTROID_LATITUDE': 'latitude',
         'CENTROID_LONGITUDE': 'longitude',
+        'FROM_SPREADSHEET': 'from_spreadsheet'
     }
 
-    df = pd.read_excel(filename, engine='openpyxl')
+    # Open given excel file 
+    df = pd.read_excel(filename, engine='openpyxl') 
 
     # Normalize column names to uppercase stripped strings so mapping is robust
     df.columns = [str(c).strip().upper() for c in df.columns]
 
-    # Rename only columns we have mappings for
+    # Rename/map columns
     rename_map = {col: mapping[col] for col in df.columns if col in mapping}
     df = df.rename(columns=rename_map)
 
-    # Convert week to ISO date string (YYYY-MM-DD) where possible
+    # Convert week to (YYYY-MM-DD)
     if 'week' in df.columns:
         df['week'] = pd.to_datetime(df['week'], errors='coerce').dt.date
 
     # Filter by minimum year: keep only records where week.year > min_year
     if 'week' in df.columns and min_year is not None:
-        before_count = len(df)
         df = df[df['week'].notna() & df['week'].apply(lambda d: getattr(d, 'year', None) is not None and d.year > min_year)]
-        after_count = len(df)
-        print(f'Filtered by week year > {min_year}: removed {before_count - after_count} rows, {after_count} remain')
 
+    # Remove duplicate events (xls file has all events accumulative, so we remove previously imported events)
+    client = _get_client()
+    #Modify this variable to do a "where" region = region
+    latest_event_date_data = client.table(table_name) \
+                .select("week") \
+                .eq("from_spreadsheet", from_spreadsheet) \
+                .order("week", desc=True) \
+                .limit(1) \
+                .execute()
+    
+    
+    if 'week' in df.columns and latest_event_date_data.data:
+        print(f"Latest event date data from Supabase:", latest_event_date_data.data)
+        # Extract the raw string from Supabase and convert to date object
+        raw_latest_week = latest_event_date_data.data[0]['week']
+        latest_week = pd.to_datetime(raw_latest_week).date()
+
+        # Filter the dataframe to only include rows newer than the latest_week
+        # then sort by week ascending and reset the index for a clean result
+        df = df[df['week'] > latest_week].sort_values(by='week', ascending=True).reset_index(drop=True)
+
+    # BEGIN INSERT LOGIC
+    
     # Numeric conversions
     if 'no_of_events' in df.columns:
         df['no_of_events'] = pd.to_numeric(df['no_of_events'], errors='coerce').apply(lambda x: int(x) if not (pd.isna(x) or math.isinf(x)) else None)
@@ -71,16 +92,18 @@ def import_and_publish(filename: str, table_name: str = 'ACLED-Aggregated-Confli
 
     # Normalize empty strings to None
     df = df.replace({'': None})
+    # Add our custom identifier field
+    df['from_spreadsheet'] = from_spreadsheet
 
     # Only keep columns that match our mapping values
     allowed_cols = set(mapping.values())
     present_cols = [c for c in df.columns if c in allowed_cols]
     df = df[present_cols]
 
-    # Replace NaN with None for JSON-friendly serialization
+    # Replace NaN's for JSON serialization
     records: List[dict] = df.where(pd.notnull(df), None).to_dict(orient='records')
 
-    # Insert in batches
+    # Insert in batches (500 by default)
     total = len(records)
     if total == 0:
         print('No records found in the file.')
@@ -97,4 +120,18 @@ def import_and_publish(filename: str, table_name: str = 'ACLED-Aggregated-Confli
             print(f'Error inserting batch starting at {i}: {e}')
             raise
 
+
+    # Uncomment this if you want to verify what was inserted
+    # latest_week_str = latest_week.isoformat() if hasattr(latest_week, 'isoformat') else str(latest_week)
+
+    # get_new_data_just_inserted = client.table(table_name) \
+    #     .select("week") \
+    #     .gt("week", latest_week_str) \
+    #     .order("week", desc=True) \
+    #     .execute()
+    
+    # print(f"Data: {get_new_data_just_inserted.data}")
+
+
     print('Import complete.')
+    
