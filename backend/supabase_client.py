@@ -6,7 +6,6 @@ from typing import Optional
 from datetime import date, datetime
 import pandas as pd
 
-# Using pathlib for cleaner cross-platform pathing
 # This looks for the .env in the same folder as this script
 BASE_DIR = Path(__file__).resolve().parent
 ENV_PATH = BASE_DIR / ".env"
