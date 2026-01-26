@@ -73,5 +73,32 @@ def run_import(filename: str, min_year: int = 2023, table_name: str = 'ACLED-Agg
         print(f"Warning: failed to move file {filename} to datasets_old: {e}")
 
 
+def run_all_imports():
+    """Iterate all files in the `datasets` folder and call `run_import` on each.
+
+    Uses the default `min_year` and `table_name` values from `run_import`.
+    Continues processing remaining files if one fails.
+    """
+    base_dir = Path(__file__).resolve().parent.parent
+    datasets_dir = base_dir / "datasets"
+    if not datasets_dir.exists():
+        print(f"Datasets directory not found: {datasets_dir}")
+        return
+
+    for p in sorted(datasets_dir.iterdir()):
+        if not p.is_file():
+            continue
+        # skip hidden files
+        if p.name.startswith('.') :
+            continue
+        try:
+            print(f"Processing file: {p}")
+            # pass the relative path so run_import's move logic resolves it
+            rel = p.relative_to(base_dir)
+            run_import(str(rel))
+        except Exception as e:
+            print(f"Error importing {p}: {e}")
+
+
 if __name__ == "__main__":
-    run_import("datasets/Asia-Pacific_aggregated_data_up_to-2026-01-10.xlsx", min_year=2023)
+    run_all_imports()
