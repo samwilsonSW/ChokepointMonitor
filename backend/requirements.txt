@@ -3,3 +3,4 @@ yfinance
 openpyxl
 supabase
 python-dotenv
+geopy

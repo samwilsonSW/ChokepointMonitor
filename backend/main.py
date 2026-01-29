@@ -3,6 +3,7 @@ import re
 import shutil
 
 from import_acled_xlsx import import_and_publish
+from geocode import get_location_data
 
 def run_import(filename: str, min_year: int = 2023, table_name: str = 'ACLED-Aggregated-Conflict-Data'):
     """Wrapper to run the XLSX -> Supabase import for a given filename.
@@ -28,8 +29,11 @@ def run_import(filename: str, min_year: int = 2023, table_name: str = 'ACLED-Agg
     except Exception as e:
         print(f"Warning: failed to move file {filename} to datasets_old: {e}")
 
+def geocode():
+    get_location_data()
 
-def run_all_imports():
+
+def run_all_imports_and_geocode():
     """Iterate all files in the `datasets` folder and call `run_import` on each.
 
     Uses the default `min_year` and `table_name` values from `run_import`.
@@ -55,6 +59,9 @@ def run_all_imports():
         except Exception as e:
             print(f"Error importing {p}: {e}")
 
+    
+
 
 if __name__ == "__main__":
-    run_all_imports()
+    # run_all_imports_and_geocode()
+    geocode()
