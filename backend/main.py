@@ -30,6 +30,10 @@ def run_import(filename: str, min_year: int = 2023, table_name: str = 'ACLED-Agg
         print(f"Warning: failed to move file {filename} to datasets_old: {e}")
 
 def geocode():
+    """
+    Separate function to run geocode functionality independent of the imports_and_geocode process.
+    Specifically useful for me right now bc I filled the data out before realizing this would be necessary.
+    """
     get_location_data()
 
 
@@ -59,9 +63,11 @@ def run_all_imports_and_geocode():
         except Exception as e:
             print(f"Error importing {p}: {e}")
 
+    get_location_data()
+
     
 
 
 if __name__ == "__main__":
-    # run_all_imports_and_geocode()
-    geocode()
+    run_all_imports_and_geocode()
+    # geocode()
