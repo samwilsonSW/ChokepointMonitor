@@ -54,7 +54,7 @@ def conflicts_to_geojson(rows):
         }
     
 if __name__ == "__main__":
-    from services.conflicts import fetch_conflict_events, conflicts_to_geojson
+    # from services.conflicts import fetch_conflict_events, conflicts_to_geojson
 
     # Example usage: get all conflicts for 2025
     events = fetch_conflict_events(start_date="2025-01-01", end_date="2025-12-31")
