@@ -1,5 +1,5 @@
 // paste api key from MAPTILER here
-const API_KEY = '4DXmdK3KMIwSxqxWSMo8';
+const API_KEY = 'RXe2SMk0wpdfxaCW7RfG';
 const MAP_STYLE = `https://api.maptiler.com/maps/dataviz/style.json?key=${API_KEY}`;
 
 // initialize maplibre here: https://maplibre.org/maplibre-gl-js/docs/
