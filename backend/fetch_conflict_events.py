@@ -1,17 +1,26 @@
-from supabase_client import query_data
+from supabase_client import _get_client
+
 def fetch_conflict_events(start_date=None, end_date=None):
     """
     Get events from database, optionally filtered by start_date and/or end_date.
     """
+    client = _get_client()
+
     filters = {}
     if start_date:
         filters['week'] = {'gte': start_date}
     if end_date:
         filters['week'] = {'lte': end_date}
 
-    events = query_data('conflict_events_enriched', filters)
+    events = query = client.table('conflict_events_enriched').select("*")
+    if start_date:
+        query = query.gte('week', start_date)
+    if end_date:
+        query = query.lte('week', end_date)
 
-    return events
+    response = events.execute()
+
+    return response.data
 
 
 def conflicts_to_geojson(rows):
@@ -23,6 +32,7 @@ def conflicts_to_geojson(rows):
     for row in rows:
         lon = row["effective_longitude"]
         lat = row["effective_latitude"]
+
 
         if lat is None or lon is None:
             continue
@@ -48,20 +58,18 @@ def conflicts_to_geojson(rows):
             }
         })
 
-        return {
-            "type": "FeatureCollection",
-            "features": features
-        }
+    return {
+        "type": "FeatureCollection",
+        "features": features
+    }
     
 if __name__ == "__main__":
-    # from services.conflicts import fetch_conflict_events, conflicts_to_geojson
+    # events = fetch_conflict_events(start_date="2025-01-01", end_date="2025-12-31")
+    events = fetch_conflict_events()
+    print(events)
+    if events is not None:
+        geojson_data = conflicts_to_geojson(events)
 
-    # Example usage: get all conflicts for 2025
-    events = fetch_conflict_events(start_date="2025-01-01", end_date="2025-12-31")
-
-    # Convert to GeoJSON
-    geojson_data = conflicts_to_geojson(events)
-
-    # Print pretty JSON to inspect in terminal
     import json
     print(json.dumps(geojson_data, indent=2))
+    print(len(geojson_data["features"]))
