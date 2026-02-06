@@ -24,4 +24,5 @@ map.on('load', async () => {
     } catch (error) {
         console.error("Error loading layers:", error);
     }
+    console.log("Arrived")
 });

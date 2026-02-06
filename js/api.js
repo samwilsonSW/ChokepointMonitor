@@ -1,8 +1,6 @@
-// api.js
-
-const API_BASE_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-    ? "http://127.0.0.1:8000" 
-    : window.location.origin; // Dynamically uses the Codespace or Production URL
+const API_BASE_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? `http://${window.location.hostname}:8001` // This matches localhost to localhost or IP to IP
+    : window.location.origin;
 
 export async function getConflictGeoJSON(startDate = null, endDate = null) {
     let url = `${API_BASE_URL}/conflicts`;
