@@ -16,5 +16,12 @@
     <script src='https://unpkg.com/maplibre-gl@4.0.0/dist/maplibre-gl.js'></script>
     
     <script type="module" src="js/map.js"></script>
+
+    <div id="filter-panel" style="position: absolute; top: 10px; left: 10px; z-index: 10; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-family: sans-serif;">
+        <h4 style="margin: 0 0 10px 0;">Filters</h4>
+        <label>Start Date:</label><br>
+        <input type="date" id="date-input" style="margin-bottom: 10px;"><br>
+        <button id="apply-filter" style="width: 100%; cursor: pointer;">Apply Filter</button>
+    </div>
 </body>
 </html>

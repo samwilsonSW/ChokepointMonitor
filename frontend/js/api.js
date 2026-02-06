@@ -1,8 +1,12 @@
-const API_BASE_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
-    ? `http://${window.location.hostname}:8001` // This matches localhost to localhost or IP to IP
-    : window.location.origin;
+const API_BASE_URL = ""; 
 
-export async function getConflictGeoJSON(startDate = null, endDate = null) {
+const getOneYearAgo = () => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 1);
+    return d.toISOString().split('T')[0];
+};
+
+export async function getConflictGeoJSON(startDate = getOneYearAgo(), endDate = null) {
     let url = `${API_BASE_URL}/conflicts`;
     const params = new URLSearchParams();
     

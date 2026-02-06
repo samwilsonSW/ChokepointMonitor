@@ -6,3 +6,4 @@ python-dotenv
 geopy
 matplotlib
 fastapi
+uvicorn

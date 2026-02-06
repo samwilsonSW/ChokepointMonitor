@@ -6,10 +6,13 @@ Use package-relative imports so this module works when the package
     python -m backend.api.main
 
 """
-
+from datetime import date
 from ..supabase_client import _get_client
 
 def fetch_conflict_events(start_date=None, end_date=None, page_size=1000):
+    print("Start Date:")
+    print(start_date)
+    # start_date = date(2026, 1, 1)
     client = _get_client()
     all_rows = []
     start = 0
@@ -36,7 +39,8 @@ def fetch_conflict_events(start_date=None, end_date=None, page_size=1000):
 
         all_rows.extend(rows)
         start += page_size
-
+    print("Rows:")
+    print(len(all_rows))
     return all_rows
 
 
