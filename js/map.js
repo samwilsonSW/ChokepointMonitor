@@ -1,3 +1,5 @@
+import { addConflictsLayer } from './layers/chokepoints.js';
+
 // paste api key from MAPTILER here
 const API_KEY = 'RXe2SMk0wpdfxaCW7RfG';
 const MAP_STYLE = `https://api.maptiler.com/maps/dataviz/style.json?key=${API_KEY}`;
@@ -12,7 +14,14 @@ const map = new maplibregl.Map({
 });
 
 // 3. Lifecycle Hooks
-map.on('load', () => {
+map.on('load', async () => {
     console.log("Map Loaded Successfully");
     // This is where we will eventually load our Conflict & Tanker layers
+    try {
+        // Use the function we imported
+        await addConflictsLayer(map);
+        console.log("Conflict layers initialized.");
+    } catch (error) {
+        console.error("Error loading layers:", error);
+    }
 });
