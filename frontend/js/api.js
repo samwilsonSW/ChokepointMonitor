@@ -23,7 +23,9 @@ export async function getConflictGeoJSON(startDate = getOneYearAgo(), endDate = 
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        return data; // This is your GeoJSON FeatureCollection
+        console.log(`Found ${data.features.length} conflicts since ${startDate}`);
+
+        return data;
     } catch (error) {
         console.error("Could not fetch conflict data:", error);
         return null;

@@ -2,7 +2,7 @@ from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
-
+from datetime import date
 from .fetch_conflict_events import fetch_conflict_events, conflicts_to_geojson
 
 app = FastAPI(title="Chokepoint Monitor API")
@@ -20,7 +20,7 @@ def get_conflicts(start_date: str | None = Query(None, description="YYYY-MM-DD")
                   end_date: str | None = Query(None, description="YYYY-MM-DD")
 ):
   if not start_date:
-          start_date = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
+    start_date = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
   rows = fetch_conflict_events(start_date=start_date, end_date=end_date)
   geojson = conflicts_to_geojson(rows)
   return geojson

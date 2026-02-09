@@ -1,17 +1,16 @@
 import { getConflictGeoJSON } from '../api.js';
 
+let mapSource;
+
 export async function addConflictsLayer(map) {
+    mapSource = map;
     // 1. Fetch the data from your FastAPI backend
-    console.log("im finna go get some geoJson files")
     const geojsonData = await getConflictGeoJSON();
-    console.log("i got em blud")
 
     if (!geojsonData) {
         console.error("Failed to load conflict GeoJSON");
         return;
     }
-
-    // 2. Add the data source to the map
     map.addSource('conflict-events', {
         type: 'geojson',
         data: geojsonData
@@ -35,20 +34,17 @@ export async function addConflictsLayer(map) {
             'circle-stroke-color': '#ffffff'
         }
     });
-
-    console.log("Conflict layer added to map");
 }
 
 document.getElementById('apply-filter').addEventListener('click', async () => {
-    console.log("Start date hit")
+    if (!mapSource) return; // Safety check: don't run if map isn't ready
+    
     const newDate = document.getElementById('date-input').value;
-    if (!newDate) return;
-
-    // 1. Remove the existing layer/source or update the data
     const data = await getConflictGeoJSON(newDate);
     
-    // 2. Update the map source
-    if (map.getSource('conflicts')) {
-        map.getSource('conflicts').setData(data);
+    // Use the correct source ID ('conflict-events' from your previous function)
+    const source = mapSource.getSource('conflict-events'); 
+    if (source) {
+        source.setData(data);
     }
 });
