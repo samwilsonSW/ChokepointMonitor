@@ -34,6 +34,45 @@ export async function addConflictsLayer(map) {
             'circle-stroke-color': '#ffffff'
         }
     });
+
+    // pop up for conflict information
+    map.on('mouseenter', 'conflict-circles', () => {
+        map.getCanvas().style.cursor = 'pointer';
+    });
+
+    // Change it back when leaving
+    map.on('mouseleave', 'conflict-circles', () => {
+        map.getCanvas().style.cursor = '';
+    });
+
+    map.on('click', 'conflict-circles', (e) => {
+        // e.features[0] contains the data for the specific circle clicked
+        const coordinates = e.features[0].geometry.coordinates.slice();
+        const props = e.features[0].properties;
+
+        // Ensure that if the map is zoomed out such that multiple
+        // copies of the feature are visible, the popup appears
+        // over the copy being pointed to.
+        while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+        }
+
+        // Create the HTML content using your Python-defined properties
+        const html = `
+            <div style="font-family: sans-serif; padding: 5px;">
+                <h3 style="margin: 0 0 5px 0;">${props.event_type || 'Conflict Event'}</h3>
+                <p><strong>Country:</strong> ${props.country}</p>
+                <p><strong>Date:</strong> ${props.week}</p>
+                <p><strong>Fatalities:</strong> ${props.fatalities}</p>
+                <p><strong>Sub-type:</strong> ${props.sub_event_type}</p>
+            </div>
+        `;
+
+        new maplibregl.Popup()
+            .setLngLat(coordinates)
+            .setHTML(html)
+            .addTo(map);
+    });
 }
 
 document.getElementById('apply-filter').addEventListener('click', async () => {
