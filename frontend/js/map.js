@@ -1,4 +1,9 @@
 import { addConflictsLayer } from './layers/chokepoints.js';
+import {
+  addConflictHeatmap1Recency,
+  addConflictHeatmap2RecencyAffectsDensity,
+  addConflictHeatmap3LayeredTimeWindows
+} from './layers/heatmap.js';
 
 // paste api key from MAPTILER here
 const API_KEY = 'RXe2SMk0wpdfxaCW7RfG';
@@ -15,11 +20,34 @@ const map = new maplibregl.Map({
 
 map.on('load', async () => {
     console.log("Map Loaded Successfully");
+    // try {
+    //     await addConflictsLayer(map);
+    //     console.log("Conflict layers initialized.");
+    // } catch (error) {
+    //     console.error("Error loading layer:", error);
+    // }
+
+    // try {
+    //     await addConflictHeatmap1Recency(map);
+    //     console.log("Heatmap 1 loaded")
+    // } catch (error) {
+    //     console.error("Error loading heatmap layer 1: ", error)
+    // }
+
+    // this is probably the best one for now.
     try {
-        await addConflictsLayer(map);
-        console.log("Conflict layers initialized.");
+        await addConflictHeatmap2RecencyAffectsDensity(map);
+        console.log("Heatmap 2 loaded")
     } catch (error) {
-        console.error("Error loading layers:", error);
+        console.error("Error loading heatmap layer 2: ", error)
     }
-    console.log("Arrived")
+
+    // try {
+    //     await addConflictHeatmap3LayeredTimeWindows(map);
+    //     console.log("Heatmap 3 loaded")
+    // } catch (error) {
+    //     console.error("Error loading heatmap layer 3: ", error)
+    // }
+
+    console.log("All layers complete");
 });
