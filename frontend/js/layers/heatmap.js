@@ -1,4 +1,6 @@
 import { getConflictGeoJSON } from '../api.js'
+// import { Map, MapStyle, config, helpers } from '@maptiler/sdk';
+
 
 let mapSource;
 let activeHeatmapSourceId = null;
@@ -133,7 +135,7 @@ export async function addConflictHeatmap2RecencyAffectsDensity(map) {
         1, 'rgba(255,0,0,0.75)'
       ],
 
-      'heatmap-opacity': 0.8
+      'heatmap-opacity': 0.6
     }
   });
 }
@@ -153,18 +155,65 @@ export async function addConflictHeatmap3LayeredTimeWindows(map) {
   activeHeatmapSourceId = 'conflict-heatmap';
 
   map.addLayer({
+    id: 'conflict-heat-maptiler',
+    type: 'heatmap',
+    source: 'conflict-heatmap',
+    filter: ['>', ['get', 'recency'], 0.66],
+    paint: {
+      'heatmap-intensity': 0.8,
+      'heatmap-radius': [
+        'interpolate', ['linear'], ['zoom'],
+        0, 10,
+        14, 40
+      ],
+      'heatmap-opacity': 0.9
+    }
+  });
+}
+
+export async function addConflictHeatmap4MaptilerExample(map) {
+  console.log("Loading heatmap now")
+  mapSource = map;
+
+  const geojsonData = await getConflictGeoJSON();
+  
+  activeHeatmapSourceId = 'conflict-heatmap'
+
+  map.addSource('conflict-heatmap', {
+    type: 'geojson',
+    data: geojsonData
+  });
+
+  map.addLayer({
     id: 'conflict-heat-recent',
     type: 'heatmap',
     source: 'conflict-heatmap',
     filter: ['>', ['get', 'recency'], 0.66],
     paint: {
-      'heatmap-intensity': 1.6,
+      'heatmap-weight': ['get', 'recency'],
+
+      'heatmap-intensity': [
+        'interpolate', ['linear'], ['zoom'],
+        0, 0.8,
+        14, 2.0
+      ],
+
       'heatmap-radius': [
         'interpolate', ['linear'], ['zoom'],
-        0, 6,
-        14, 30
+        0, 30,
+        14, 40
       ],
-      'heatmap-opacity': 0.9
+
+      'heatmap-color': [
+        'interpolate', ['linear'], ['heatmap-density'],
+        0, 'rgba(0, 0, 255, 0)',
+        0.2, 'rgba(0, 255, 255, 0.5)',
+        0.5, 'rgb(255, 255, 0)',
+        0.8, 'rgb(255, 140, 0)',
+        1, 'rgb(255, 0, 0)'
+      ],
+
+      'heatmap-opacity': 0.6
     }
   });
 }

@@ -29,9 +29,9 @@ export async function addConflictsLayer(map) {
                 3, 3,  // At zoom 3, radius is 2px
                 10, 8  // At zoom 10, radius is 8px
             ],
-            'circle-color': '#ff4d4d', // Red for conflict
-            'circle-opacity': 0.7,
-            'circle-stroke-width': 1,
+            'circle-color': '#f04dff', // Red for conflict
+            'circle-opacity': 0.2,
+            'circle-stroke-width': 0.5,
             'circle-stroke-color': '#ffffff'
         }
     });
@@ -47,27 +47,39 @@ export async function addConflictsLayer(map) {
     });
 
     map.on('click', 'conflict-circles', (e) => {
-        // e.features[0] contains the data for the specific circle clicked
         const coordinates = e.features[0].geometry.coordinates.slice();
-        const props = e.features[0].properties;
+        
+        // 1. Get ALL features under the click, not just the first one
+        const features = e.features;
+        const count = features.length;
 
-        // Ensure that if the map is zoomed out such that multiple
-        // copies of the feature are visible, the popup appears
-        // over the copy being pointed to.
+        // Fix for map wrapping
         while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
             coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
         }
 
-        // Create the HTML content using your Python-defined properties
-        const html = `
-            <div style="font-family: sans-serif; padding: 5px;">
-                <h3 style="margin: 0 0 5px 0;">${props.event_type || 'Conflict Event'}</h3>
-                <p><strong>Country:</strong> ${props.country}</p>
-                <p><strong>Date:</strong> ${props.week}</p>
-                <p><strong>Fatalities:</strong> ${props.fatalities}</p>
-                <p><strong>Sub-type:</strong> ${props.sub_event_type}</p>
-            </div>
-        `;
+        // 2. Build the HTML dynamically
+        // If there's more than one, we show a "Summary" header
+        let html = `<div style="font-family: sans-serif; padding: 5px; max-height: 200px; overflow-y: auto;">`;
+        
+        if (count > 1) {
+            html += `<h3 style="margin: 0 0 10px 0; color: #f04dff;">${count} Events at this location</h3><hr>`;
+        }
+
+        // 3. Loop through each event found at this pixel
+        features.forEach((feature, index) => {
+            const props = feature.properties;
+            html += `
+                <div style="${index > 0 ? 'border-top: 1px solid #eee; margin-top: 10px; pt: 5px;' : ''}">
+                    <h4 style="margin: 0 0 5px 0;">${props.event_type || 'Conflict Event'}</h4>
+                    <p style="margin: 2px 0;"><strong>Date:</strong> ${props.week}</p>
+                    <p style="margin: 2px 0;"><strong>Fatalities:</strong> ${props.fatalities}</p>
+                    <p style="margin: 2px 0; font-size: 0.9em; color: #666;">${props.sub_event_type}</p>
+                </div>
+            `;
+        });
+
+        html += `</div>`;
 
         new maplibregl.Popup()
             .setLngLat(coordinates)

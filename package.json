@@ -1,0 +1,24 @@
+{
+  "dependencies": {
+    "@maptiler/sdk": "^3.11.1"
+  },
+  "name": "chokepointmonitor",
+  "version": "1.0.0",
+  "description": "Backend:      Install all required python packages using `pip install -r backend/requirements.txt`<br/>     To run, use command `python -m backend.api.main`",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/samwilsonSW/ChokepointMonitor.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/samwilsonSW/ChokepointMonitor/issues"
+  },
+  "homepage": "https://github.com/samwilsonSW/ChokepointMonitor#readme"
+}
