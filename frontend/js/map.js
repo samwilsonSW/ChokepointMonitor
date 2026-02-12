@@ -1,3 +1,4 @@
+import { getConflictGeoJSON } from './api.js';
 import { addConflictsLayer } from './layers/chokepoints.js';
 import {
   addConflictHeatmap1Recency,
@@ -21,8 +22,11 @@ const map = new maplibregl.Map({
 
 map.on('load', async () => {
     console.log("Map Loaded Successfully");
+
+    var geoJsonData = await getConflictGeoJSON(map);
+
     try {
-        await addConflictsLayer(map);
+        await addConflictsLayer(map, geoJsonData);
         console.log("Conflict layers initialized.");
     } catch (error) {
         console.error("Error loading layer:", error);
@@ -59,4 +63,15 @@ map.on('load', async () => {
     
 
     console.log("All layers complete");
+});
+
+document.getElementById('apply-filter').addEventListener('click', async () => {
+  if (!mapSource || !activeHeatmapSourceId) return;
+
+  const newDate = document.getElementById('date-input').value;
+
+  const source = mapSource.getSource(activeHeatmapSourceId);
+  if (source) {
+    source.setData(data);
+  }
 });

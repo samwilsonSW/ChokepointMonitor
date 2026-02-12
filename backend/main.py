@@ -1,9 +1,8 @@
 from pathlib import Path
 import re
 import shutil
-
-from import_acled_xlsx import import_and_publish
-from geocode import get_location_data
+from backend.import_acled_xlsx import import_and_publish
+from backend.geocode import get_location_data
 
 def run_import(filename: str, min_year: int = 2023, table_name: str = 'ACLED-Aggregated-Conflict-Data'):
     """Wrapper to run the XLSX -> Supabase import for a given filename.

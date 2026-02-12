@@ -2,7 +2,7 @@ import math
 from typing import List
 
 import pandas as pd
-from supabase_client import insert_data, _get_client
+from backend.supabase_client import insert_data, _get_client
 
 def import_and_publish(filename: str, table_name: str = 'ACLED-Aggregated-Conflict-Data', batch_size: int = 500, min_year: int = 2023):
     #Set identifier for which ACLED data file we are uplaoding, region field is not reliable enough so we must add this

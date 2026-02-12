@@ -1,5 +1,5 @@
 from geopy.geocoders import Nominatim
-from supabase_client import _get_client
+from backend.supabase_client import _get_client
 
 def geocode(locations, client):
     geolocator = Nominatim(user_agent="geo_app_admin_handler_v1")
