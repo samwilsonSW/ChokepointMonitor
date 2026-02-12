@@ -3,18 +3,16 @@ import { getConflictGeoJSON } from '../api.js';
 let mapSource;
 let activeHeatmapSourceId = null;
 
-export async function addConflictsLayer(map) {
+export async function addConflictsLayer(map, geoJsonData) {
     mapSource = map;
     
-    const geojsonData = await getConflictGeoJSON();
-
-    if (!geojsonData) {
+    if (!geoJsonData) {
         console.error("Failed to load conflict GeoJSON");
         return;
     }
     map.addSource('conflict-events', {
         type: 'geojson',
-        data: geojsonData
+        data: geoJsonData
     });
 
     // 3. Add the visual layer (Circles)
@@ -88,14 +86,14 @@ export async function addConflictsLayer(map) {
     });
 }
 
-document.getElementById('apply-filter').addEventListener('click', async () => {
-    if (!mapSource) return; 
+// document.getElementById('apply-filter').addEventListener('click', async () => {
+//     if (!mapSource) return; 
     
-    const newDate = document.getElementById('date-input').value;
-    const data = await getConflictGeoJSON(newDate);
+//     const newDate = document.getElementById('date-input').value;
+//     const data = await getConflictGeoJSON(newDate);
     
-    const source = mapSource.getSource('conflict-events'); 
-    if (source) {
-        source.setData(data);
-    }
-});
+//     const source = mapSource.getSource('conflict-events'); 
+//     if (source) {
+//         source.setData(data);
+//     }
+// });

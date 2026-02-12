@@ -6,15 +6,13 @@ let mapSource;
 let activeHeatmapSourceId = null;
 
 // Recency controls opacity (safety-focused)
-export async function addConflictHeatmap1Recency(map) {
+export async function addConflictHeatmap1Recency(map, geoJsonData) {
   console.log("Loading heatmap now")
   mapSource = map;
 
-  const geojsonData = await getConflictGeoJSON();
-
   map.addSource('conflict-heatmap', {
     type: 'geojson',
-    data: geojsonData
+    data: geoJsonData
   });
 
   activeHeatmapSourceId = 'conflict-heatmap';
@@ -89,15 +87,13 @@ export async function addConflictHeatmap1Recency(map) {
 }
 
 // Recency directly impacts density, not visibility. Best for risk?
-export async function addConflictHeatmap2RecencyAffectsDensity(map) {
+export async function addConflictHeatmap2RecencyAffectsDensity(map, geoJsonData) {
   console.log("Loading heatmap now")
   mapSource = map;
 
-  const geojsonData = await getConflictGeoJSON();
-
   map.addSource('conflict-heatmap', {
     type: 'geojson',
-    data: geojsonData
+    data: geoJsonData
   });
 
   activeHeatmapSourceId = 'conflict-heatmap';
@@ -141,15 +137,15 @@ export async function addConflictHeatmap2RecencyAffectsDensity(map) {
 }
 
 // Analyst View
-export async function addConflictHeatmap3LayeredTimeWindows(map) {
+export async function addConflictHeatmap3LayeredTimeWindows(map, geoJsonData) {
   console.log("Loading heatmap now")
   mapSource = map;
 
-  const geojsonData = await getConflictGeoJSON();
+  
 
   map.addSource('conflict-heatmap', {
     type: 'geojson',
-    data: geojsonData
+    data: geoJsonData
   });
 
   activeHeatmapSourceId = 'conflict-heatmap';
@@ -171,17 +167,15 @@ export async function addConflictHeatmap3LayeredTimeWindows(map) {
   });
 }
 
-export async function addConflictHeatmap4MaptilerExample(map) {
+export async function addConflictHeatmap4MaptilerExample(map, geoJsonData) {
   console.log("Loading heatmap now")
   mapSource = map;
-
-  const geojsonData = await getConflictGeoJSON();
   
   activeHeatmapSourceId = 'conflict-heatmap'
 
   map.addSource('conflict-heatmap', {
     type: 'geojson',
-    data: geojsonData
+    data: geoJsonData
   });
 
   map.addLayer({
@@ -218,14 +212,14 @@ export async function addConflictHeatmap4MaptilerExample(map) {
   });
 }
 
-document.getElementById('apply-filter').addEventListener('click', async () => {
-  if (!mapSource || !activeHeatmapSourceId) return;
+// document.getElementById('apply-filter').addEventListener('click', async () => {
+//   if (!mapSource || !activeHeatmapSourceId) return;
 
-  const newDate = document.getElementById('date-input').value;
-  const data = await getConflictGeoJSON(newDate);
+//   const newDate = document.getElementById('date-input').value;
+//   const data = await getConflictGeoJSON(newDate);
 
-  const source = mapSource.getSource(activeHeatmapSourceId);
-  if (source) {
-    source.setData(data);
-  }
-});
+//   const source = mapSource.getSource(activeHeatmapSourceId);
+//   if (source) {
+//     source.setData(data);
+//   }
+// });

@@ -33,7 +33,7 @@ map.on('load', async () => {
     }
 
     // try {
-    //     await addConflictHeatmap1Recency(map);
+    //     await addConflictHeatmap1Recency(map, geoJsonData);
     //     console.log("Heatmap 1 loaded")
     // } catch (error) {
     //     console.error("Error loading heatmap layer 1: ", error)
@@ -41,21 +41,21 @@ map.on('load', async () => {
 
     // this is probably the best one for now.
     try {
-        await addConflictHeatmap2RecencyAffectsDensity(map);
+        await addConflictHeatmap2RecencyAffectsDensity(map, geoJsonData);
         console.log("Heatmap 2 loaded")
     } catch (error) {
         console.error("Error loading heatmap layer 2: ", error)
     }
 
     // try {
-    //     await addConflictHeatmap3LayeredTimeWindows(map);
+    //     await addConflictHeatmap3LayeredTimeWindows(map, geoJsonData);
     //     console.log("Heatmap 3 loaded")
     // } catch (error) {
     //     console.error("Error loading heatmap layer 3: ", error)
     // }
 
     // try {
-    //     await addConflictHeatmap4MaptilerExample(map);
+    //     await addConflictHeatmap4MaptilerExample(map, geoJsonData);
     //     console.log("Heatmap 4 loaded")
     // } catch (error) {
     //     console.error("Error loading heatmap layer 4: ", error)

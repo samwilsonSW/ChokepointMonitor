@@ -1,7 +1,6 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-import os
 from datetime import date
 from .fetch_conflict_events import fetch_conflict_events, conflicts_to_geojson
 
@@ -16,12 +15,8 @@ app.add_middleware(
 )
 
 @app.get("/conflicts")
-def get_conflicts(start_date: str | None = Query(None, description="YYYY-MM-DD"), 
-                  end_date: str | None = Query(None, description="YYYY-MM-DD")
-):
-  if not start_date:
-    start_date = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
-  rows = fetch_conflict_events(start_date=start_date, end_date=end_date)
+def get_conflicts():
+  rows = fetch_conflict_events()
   geojson = conflicts_to_geojson(rows)
   return geojson
 

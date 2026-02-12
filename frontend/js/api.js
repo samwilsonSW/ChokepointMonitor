@@ -1,21 +1,13 @@
 const API_BASE_URL = ""; 
 
-const getOneYearAgo = () => {
-    const d = new Date();
-    d.setFullYear(d.getFullYear() - 1);
-    return d.toISOString().split('T')[0];
-};
+// const getOneYearAgo = () => {
+//     const d = new Date();
+//     d.setFullYear(d.getFullYear() - 1);
+//     return d.toISOString().split('T')[0];
+// };
 
-export async function getConflictGeoJSON(startDate = getOneYearAgo(), endDate = null) {
+export async function getConflictGeoJSON() {
     let url = `${API_BASE_URL}/conflicts`;
-    const params = new URLSearchParams();
-    
-    if (startDate) params.append('start_date', startDate);
-    if (endDate) params.append('end_date', endDate);
-    
-    if (params.toString()) {
-        url += `?${params.toString()}`;
-    }
 
     try {
         const response = await fetch(url);
@@ -23,7 +15,7 @@ export async function getConflictGeoJSON(startDate = getOneYearAgo(), endDate = 
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        console.log(`Found ${data.features.length} conflicts since ${startDate}`);
+        console.log(`Found ${data.features.length} conflicts`);
 
         return data;
     } catch (error) {
