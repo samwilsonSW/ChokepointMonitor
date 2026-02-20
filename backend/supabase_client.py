@@ -56,6 +56,7 @@ def _get_client() -> Client:
 
         _supabase = create_client(url, key)
     return _supabase
+    
 def insert_data(table: str, data):
     try:
         client = _get_client()

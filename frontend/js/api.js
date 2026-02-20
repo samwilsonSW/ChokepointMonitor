@@ -9,7 +9,7 @@ const API_BASE_URL = "";
 export async function getConflictGeoJSON(startDate = null) {
     let url = `${API_BASE_URL}/conflicts`;
     if (startDate) {
-        url += `?start_date=${startDate}`;
+        url += `?start_date=${encodeURIComponent(startDate)}`;  // handles null input for initial page load (loads all data)
     }
 
     try {

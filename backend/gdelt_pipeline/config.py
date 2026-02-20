@@ -9,10 +9,10 @@ from typing import Dict, Any
 
 from dotenv import load_dotenv
 from google.cloud import bigquery
-from supabase import create_client, Client
+from ..supabase_client import _get_client, Client
 
 BASE_DIR = Path(__file__).resolve().parent
-ENV_PATH = BASE_DIR.parent / "backend" / ".env"
+ENV_PATH = BASE_DIR.parent / ".env"
 
 load_dotenv(dotenv_path=ENV_PATH)
 
@@ -101,42 +101,35 @@ CONFIDENCE_THRESHOLDS = {
 BIGQUERY_PROJECT = 'gdelt-bq'
 BIGQUERY_DATASET = 'gdeltv2'
 
-
-def get_supabase_client() -> Client:
-    """Initialize and return Supabase client from environment."""
-    url = os.getenv('SUPABASE_URL')
-    key = os.getenv('SUPABASE_KEY')
-    
-    if not url or not key:
-        # Try manual parsing if env vars not loaded
-        if ENV_PATH.exists():
-            with open(ENV_PATH, 'r', encoding='utf-8') as f:
-                for line in f:
-                    line = line.strip()
-                    if not line or line.startswith('#'):
-                        continue
-                    if '=' in line:
-                        k, v = line.split('=', 1)
-                        clean_v = v.strip().strip("'\"").strip('"')
-                        if k.strip() == 'SUPABASE_URL':
-                            url = clean_v
-                        elif k.strip() == 'SUPABASE_KEY':
-                            key = clean_v
-    
-    if not url or not key:
-        raise ValueError(
-            f"SUPABASE_URL and SUPABASE_KEY must be set. "
-            f"Checked env vars and {ENV_PATH}"
-        )
-    
-    return create_client(url, key)
-
-
 def get_bigquery_client() -> bigquery.Client:
-    """Initialize and return BigQuery client."""
-    # GOOGLE_APPLICATION_CREDENTIALS should be set in environment
-    return bigquery.Client()
+    # 1. Manually define the path to your .env
+    # Based on your logs, this is the absolute path:
+    env_path = "/workspaces/ChokepointMonitor/backend/.env"
+    
+    # 2. Force load it into the OS environment
+    if os.path.exists(env_path):
+        load_dotenv(env_path)
+        print(f"✅ Loaded .env from {env_path}")
+    else:
+        print(f"❌ Could not find .env at {env_path}")
 
+    # 3. Check if the variable is actually there now
+    creds_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+    print(f"Showing creds path: {creds_path}")
+    if not creds_path:
+        print("❌ GOOGLE_APPLICATION_CREDENTIALS not found in environment!")
+    else:
+        # Convert relative path to absolute if necessary
+        # If your .env says "backend/gdelt_pipeline/creds.json", 
+        # we ensure it's absolute for the BigQuery library.
+        if not os.path.isabs(creds_path):
+            creds_path = os.path.join("/workspaces/ChokepointMonitor", creds_path)
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = creds_path
+        
+        print(f"✅ Using credentials at: {creds_path}")
+
+    # 4. Now initialize (it will check os.environ automatically)
+    return bigquery.Client()
 
 def get_chokepoint_for_country(country_code: str) -> list:
     """Return list of chokepoint regions that include a country."""
@@ -145,3 +138,27 @@ def get_chokepoint_for_country(country_code: str) -> list:
         if country_code in bounds.get('countries', []):
             regions.append(name)
     return regions
+
+
+def main():
+    """Test the configuration and connections."""
+    print("--- GDELT Pipeline Config Test ---")
+    print(f"Base Directory: {BASE_DIR}")
+    print(f"Env Path: {ENV_PATH}")
+    
+    try:
+        print("\nTesting Supabase Connection...")
+        sb = _get_client()
+        print("✅ Supabase client initialized.")
+        
+        print("\nTesting BigQuery Connection...")
+        bq = get_bigquery_client()
+        print(f"✅ BigQuery client initialized for project: {bq.project}")
+        
+        print("\nConfiguration looks solid!")
+        
+    except Exception as e:
+        print(f"\n❌ Configuration Error: {e}")
+
+if __name__ == "__main__":
+    main()

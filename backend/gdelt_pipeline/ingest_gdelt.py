@@ -12,8 +12,8 @@ from decimal import Decimal
 from google.cloud import bigquery
 from google.api_core.exceptions import GoogleAPIError
 from supabase import Client
-
-from config import CHOKEPOINTS, CONFLICT_CODES, get_supabase_client, get_bigquery_client
+from ..supabase_client import _get_client
+from config import CHOKEPOINTS, CONFLICT_CODES, get_bigquery_client
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -357,7 +357,7 @@ def main(
     logger.info("Initializing GDELT ingestion pipeline")
     
     bq_client = get_bigquery_client()
-    supabase = get_supabase_client()
+    supabase = _get_client()
     
     if backfill_days:
         since = datetime.utcnow() - timedelta(days=backfill_days)

@@ -7,3 +7,4 @@ geopy
 matplotlib
 fastapi
 uvicorn
+bigquery
