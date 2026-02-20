@@ -1,21 +1,13 @@
-import { getConflictGeoJSON } from '../api.js'
-// import { Map, MapStyle, config, helpers } from '@maptiler/sdk';
-
-
-let mapSource;
-let activeHeatmapSourceId = null;
+// Heatmap layer implementations for conflict data visualization
 
 // Recency controls opacity (safety-focused)
 export async function addConflictHeatmap1Recency(map, geoJsonData) {
   console.log("Loading heatmap now")
-  mapSource = map;
 
   map.addSource('conflict-heatmap', {
     type: 'geojson',
     data: geoJsonData
   });
-
-  activeHeatmapSourceId = 'conflict-heatmap';
 
   // Older events (faded)
   map.addLayer({
@@ -89,14 +81,11 @@ export async function addConflictHeatmap1Recency(map, geoJsonData) {
 // Recency directly impacts density, not visibility. Best for risk?
 export async function addConflictHeatmap2RecencyAffectsDensity(map, geoJsonData) {
   console.log("Loading heatmap now")
-  mapSource = map;
 
   map.addSource('conflict-heatmap', {
     type: 'geojson',
     data: geoJsonData
   });
-
-  activeHeatmapSourceId = 'conflict-heatmap';
 
   map.addLayer({
     id: 'conflict-heat-recency-weight',
@@ -139,16 +128,11 @@ export async function addConflictHeatmap2RecencyAffectsDensity(map, geoJsonData)
 // Analyst View
 export async function addConflictHeatmap3LayeredTimeWindows(map, geoJsonData) {
   console.log("Loading heatmap now")
-  mapSource = map;
-
-  
 
   map.addSource('conflict-heatmap', {
     type: 'geojson',
     data: geoJsonData
   });
-
-  activeHeatmapSourceId = 'conflict-heatmap';
 
   map.addLayer({
     id: 'conflict-heat-maptiler',
@@ -169,9 +153,6 @@ export async function addConflictHeatmap3LayeredTimeWindows(map, geoJsonData) {
 
 export async function addConflictHeatmap4MaptilerExample(map, geoJsonData) {
   console.log("Loading heatmap now")
-  mapSource = map;
-  
-  activeHeatmapSourceId = 'conflict-heatmap'
 
   map.addSource('conflict-heatmap', {
     type: 'geojson',
@@ -211,15 +192,3 @@ export async function addConflictHeatmap4MaptilerExample(map, geoJsonData) {
     }
   });
 }
-
-// document.getElementById('apply-filter').addEventListener('click', async () => {
-//   if (!mapSource || !activeHeatmapSourceId) return;
-
-//   const newDate = document.getElementById('date-input').value;
-//   const data = await getConflictGeoJSON(newDate);
-
-//   const source = mapSource.getSource(activeHeatmapSourceId);
-//   if (source) {
-//     source.setData(data);
-//   }
-// });

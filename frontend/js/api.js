@@ -6,8 +6,11 @@ const API_BASE_URL = "";
 //     return d.toISOString().split('T')[0];
 // };
 
-export async function getConflictGeoJSON() {
+export async function getConflictGeoJSON(startDate = null) {
     let url = `${API_BASE_URL}/conflicts`;
+    if (startDate) {
+        url += `?start_date=${startDate}`;
+    }
 
     try {
         const response = await fetch(url);

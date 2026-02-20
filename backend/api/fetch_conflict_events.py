@@ -8,10 +8,14 @@ Use package-relative imports so this module works when the package
 """
 from datetime import date, datetime, timezone
 from ..supabase_client import _get_client
-def fetch_conflict_events():
+def fetch_conflict_events(start_date: str = None):
     today = date.today()
-    start_date_obj = date(today.year - 3, 1, 1)      # for recency math
-    start_date_str = start_date_obj.isoformat()      # for Supabase query
+    if start_date:
+        start_date_obj = date.fromisoformat(start_date)
+        start_date_str = start_date
+    else:
+        start_date_obj = date(today.year - 3, 1, 1)      # for recency math
+        start_date_str = start_date_obj.isoformat()      # for Supabase query
     print("start date:")
     print(start_date_str)
     client = _get_client()
