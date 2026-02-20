@@ -1,16 +1,21 @@
-# Environment variables
+# --- Security & Environment ---
 .env
 backend/.env
-
-# Frontend config with secrets
+# Specifically protecting your Google BigQuery key
+backend/gdelt_pipeline/creds.json
+# Frontend secrets
 frontend/js/config.js
 
-# Python
+# --- Python ---
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+.venv/
+venv/
+ENV/
+env/
 build/
 develop-eggs/
 dist/
@@ -27,25 +32,31 @@ wheels/
 .installed.cfg
 *.egg
 
-# Node
+# --- Node / Frontend ---
 node_modules/
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.parcel-cache/
 
-# Data files
+# --- Data Files ---
 *.csv
 *.xlsx
+
+
+# Ignore JSON keys/data, but KEEP configuration files
 *.json
 !package*.json
 !jsconfig.json
 !tsconfig.json
 
-# IDE
+# --- IDE & Editors ---
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# OS
+# --- OS Specific ---
 .DS_Store
 Thumbs.db

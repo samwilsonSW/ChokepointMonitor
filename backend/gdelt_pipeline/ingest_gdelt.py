@@ -1,6 +1,11 @@
 """
 GDELT to Supabase ingestion pipeline.
 Fetches real-time conflict events from BigQuery and stores in Supabase.
+
+- Find out when we last fetched data.
+- Ask BigQuery for new conflict events in the chokepoints.
+- Clean & - Transform the raw data and decide how much we trust it.
+- Push the cleaned data into Supabase.
 """
 
 import os
