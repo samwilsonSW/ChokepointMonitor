@@ -1,0 +1,21 @@
+# GDELT Ingestion Pipeline Dependencies
+
+# BigQuery client for fetching GDELT data
+google-cloud-bigquery>=3.0.0
+google-api-core>=2.0.0
+
+# Supabase client for data storage
+supabase-py>=2.0.0
+
+# Environment variable management
+python-dotenv>=1.0.0
+
+# Data processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# HTTP requests (for any additional APIs)
+requests>=2.31.0
+
+# Type hints support
+typing-extensions>=4.0.0
