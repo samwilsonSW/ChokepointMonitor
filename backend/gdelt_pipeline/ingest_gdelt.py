@@ -18,7 +18,7 @@ from google.cloud import bigquery
 from google.api_core.exceptions import GoogleAPIError
 from supabase import Client
 from ..supabase_client import _get_client
-from config import CHOKEPOINTS, CONFLICT_CODES, get_bigquery_client
+from backend.gdelt_pipeline.config import CHOKEPOINTS, CONFLICT_CODES, get_bigquery_client
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -385,13 +385,24 @@ def main(
     
     logger.info(f"Transformed {len(records)} events for ingestion")
     
-    if records:
-        count = ingest_to_supabase(supabase, records)
-        logger.info(f"Successfully ingested {count} events")
-        return count
+
+
+
+    #Testing output
+    print(records)
+    return records
+
+
+
+    #UNCOMMENT FOR SUPABSE UPLOAD
+
+    # if records:
+    #     count = ingest_to_supabase(supabase, records)
+    #     logger.info(f"Successfully ingested {count} events")
+    #     return count
     
-    logger.info("No events to ingest")
-    return 0
+    # logger.info("No events to ingest")
+    # return 0
 
 
 if __name__ == '__main__':
