@@ -1,5 +1,6 @@
-import { getConflictGeoJSON } from './api.js';
+import { getConflictGeoJSON, getChokepointMetrics } from './api.js';
 import { addConflictsLayer } from './layers/chokepoints.js';
+import { addGeofenceLayers, updateGeofenceData } from './layers/geofences.js';
 import {
   addConflictHeatmap1Recency,
   addConflictHeatmap2RecencyAffectsDensity,
@@ -23,13 +24,25 @@ const map = new maplibregl.Map({
 map.on('load', async () => {
     console.log("Map Loaded Successfully");
 
-    var geoJsonData = await getConflictGeoJSON(map);
+    // Fetch both conflict data and chokepoint metrics in parallel
+    const [geoJsonData, metricsData] = await Promise.all([
+        getConflictGeoJSON(),
+        getChokepointMetrics()
+    ]);
 
     try {
         await addConflictsLayer(map, geoJsonData);
         console.log("Conflict layers initialized.");
     } catch (error) {
-        console.error("Error loading layer:", error);
+        console.error("Error loading conflict layer:", error);
+    }
+
+    // Add geofence polygons and risk badges
+    try {
+        await addGeofenceLayers(map, metricsData);
+        console.log("Geofence layers initialized.");
+    } catch (error) {
+        console.error("Error loading geofence layers:", error);
     }
 
     // try {
@@ -69,9 +82,13 @@ document.getElementById('apply-filter').addEventListener('click', async () => {
   const newDate = document.getElementById('date-input').value;
   if (!newDate) return;
 
-  // Fetch new data based on selected date
-  const newGeoJsonData = await getConflictGeoJSON(newDate);
-  if (!newGeoJsonData) return;
+  // Fetch new data based on selected date (both conflicts and metrics)
+  const [newGeoJsonData, newMetricsData] = await Promise.all([
+    getConflictGeoJSON(newDate),
+    getChokepointMetrics(newDate)
+  ]);
+
+  if (!newGeoJsonData || !newMetricsData) return;
 
   // Update conflict events source
   const eventsSource = map.getSource('conflict-events');
@@ -84,4 +101,7 @@ document.getElementById('apply-filter').addEventListener('click', async () => {
   if (heatmapSource) {
     heatmapSource.setData(newGeoJsonData);
   }
+
+  // Update geofence data and risk badges
+  updateGeofenceData(map, newMetricsData);
 });
