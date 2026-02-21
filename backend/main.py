@@ -52,6 +52,9 @@ def run_all_imports_and_geocode():
         if not p.is_file():
             continue
         # skip hidden files
+        if p.name = "holder.txt":
+            continue
+
         if p.name.startswith('.') :
             continue
         try:

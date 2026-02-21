@@ -7,8 +7,8 @@ import {
   addConflictHeatmap4MaptilerExample
 } from './layers/heatmap.js';
 
-// paste api key from MAPTILER here
-const API_KEY = 'RXe2SMk0wpdfxaCW7RfG';
+// MapTiler API key - inject at build time or use env var
+const API_KEY = window.MAPTILER_API_KEY || '';
 const MAP_STYLE = `https://api.maptiler.com/maps/dataviz/style.json?key=${API_KEY}`;
 
 // initialize maplibre here: https://maplibre.org/maplibre-gl-js/docs/
@@ -66,12 +66,22 @@ map.on('load', async () => {
 });
 
 document.getElementById('apply-filter').addEventListener('click', async () => {
-  if (!mapSource || !activeHeatmapSourceId) return;
-
   const newDate = document.getElementById('date-input').value;
+  if (!newDate) return;
 
-  const source = mapSource.getSource(activeHeatmapSourceId);
-  if (source) {
-    source.setData(data);
+  // Fetch new data based on selected date
+  const newGeoJsonData = await getConflictGeoJSON(newDate);
+  if (!newGeoJsonData) return;
+
+  // Update conflict events source
+  const eventsSource = map.getSource('conflict-events');
+  if (eventsSource) {
+    eventsSource.setData(newGeoJsonData);
+  }
+
+  // Update heatmap source if it exists
+  const heatmapSource = map.getSource('conflict-heatmap');
+  if (heatmapSource) {
+    heatmapSource.setData(newGeoJsonData);
   }
 });

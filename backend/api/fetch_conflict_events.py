@@ -8,10 +8,21 @@ Use package-relative imports so this module works when the package
 """
 from datetime import date, datetime, timezone
 from ..supabase_client import _get_client
-def fetch_conflict_events():
+def fetch_conflict_events(start_date: str = None):
     today = date.today()
-    start_date_obj = date(today.year - 3, 1, 1)      # for recency math
-    start_date_str = start_date_obj.isoformat()      # for Supabase query
+    # JS trying to send an empty object instead of null, this handles that.
+    if start_date and start_date != "[object Object]" and start_date != "null":
+        try:
+            start_date_obj = date.fromisoformat(start_date)
+            start_date_str = start_date
+        except ValueError:
+            # Fallback if the string is still malformed
+            start_date_obj = date(today.year - 3, 1, 1)
+            start_date_str = start_date_obj.isoformat()
+    else:
+        
+        start_date_obj = date(today.year - 3, 1, 1)
+        start_date_str = start_date_obj.isoformat()
     print("start date:")
     print(start_date_str)
     client = _get_client()

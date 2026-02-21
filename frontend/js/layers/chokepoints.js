@@ -1,10 +1,6 @@
-import { getConflictGeoJSON } from '../api.js';
-
-let mapSource;
-let activeHeatmapSourceId = null;
+// Conflict events layer with popups
 
 export async function addConflictsLayer(map, geoJsonData) {
-    mapSource = map;
     
     if (!geoJsonData) {
         console.error("Failed to load conflict GeoJSON");
@@ -85,15 +81,3 @@ export async function addConflictsLayer(map, geoJsonData) {
             .addTo(map);
     });
 }
-
-// document.getElementById('apply-filter').addEventListener('click', async () => {
-//     if (!mapSource) return; 
-    
-//     const newDate = document.getElementById('date-input').value;
-//     const data = await getConflictGeoJSON(newDate);
-    
-//     const source = mapSource.getSource('conflict-events'); 
-//     if (source) {
-//         source.setData(data);
-//     }
-// });
