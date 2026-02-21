@@ -52,7 +52,8 @@ def fetch_gdelt_events(
     Yields:
         Dict containing event data from GDELT
     """
-    date_str = since_datetime.strftime('%Y%m%d')
+    sql_date_int = int(since_datetime.strftime('%Y%m%d'))          # for e.SQLDATE
+    mention_time_int = int(since_datetime.strftime('%Y%m%d%H%M%S')) # for MentionTimeDate
     chokepoint_clause = build_chokepoint_where_clause()
     conflict_codes_str = ', '.join(f"'{code}'" for code in CONFLICT_CODES)
     
@@ -91,20 +92,19 @@ def fetch_gdelt_events(
         m.WordCount as word_count
     FROM `gdelt-bq.gdeltv2.events` e
     LEFT JOIN (
-        SELECT 
+        SELECT
             GLOBALEVENTID,
-            AVG(AvgTone) as AvgTone,
-            AVG(PositiveScore) as PositiveScore,
-            AVG(NegativeScore) as NegativeScore,
-            AVG(Polarity) as Polarity,
-            AVG(ActivityReferenceDensity) as ActivityReferenceDensity,
-            AVG(SelfGroupReferenceDensity) as SelfGroupReferenceDensity,
-            AVG(WordCount) as WordCount
+            AVG(MentionDocTone) AS tone_score,
+            AVG(MentionDocLen) AS avg_doc_len,
+            COUNT(1) AS mention_count,
+            COUNT(DISTINCT MentionIdentifier) AS unique_docs,
+            COUNT(DISTINCT MentionSourceName) AS unique_sources
         FROM `gdelt-bq.gdeltv2.eventmentions`
-        WHERE MentionTimeDate >= '{date_str}'
+        WHERE MentionTimeDate >= {mention_time_int}
         GROUP BY GLOBALEVENTID
-    ) m ON e.GLOBALEVENTID = m.GLOBALEVENTID
-    WHERE e.SQLDATE >= {date_str}
+        ) m
+        ON e.GLOBALEVENTID = m.GLOBALEVENTID
+    WHERE e.SQLDATE >= {sql_date_int}
         AND e.ActionGeo_Lat IS NOT NULL
         AND e.ActionGeo_Long IS NOT NULL
         AND ({chokepoint_clause})
