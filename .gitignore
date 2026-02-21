@@ -32,6 +32,8 @@ wheels/
 .installed.cfg
 *.egg
 
+__pycache__/
+
 # --- Node / Frontend ---
 node_modules/
 npm-debug.log*
