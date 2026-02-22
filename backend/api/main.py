@@ -17,7 +17,8 @@ app.add_middleware(
 
 @app.get("/conflicts")
 def get_conflicts(start_date: str = None):
-  rows = fetch_conflict_events(start_date=start_date)
+  rows = fetch_conflict_events(start_date=start_date, chokepoints_only=True)
+#   rows = fetch_conflict_events(start_date=start_date)
   geojson = conflicts_to_geojson(rows)
   return geojson
 

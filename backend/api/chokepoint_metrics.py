@@ -26,6 +26,9 @@ def fetch_chokepoint_metrics(start_date: str = None) -> List[Dict[str, Any]]:
         List of dicts with metrics per chokepoint region
     """
     client = _get_client()
+
+    # user is "session_user", RPC was very upset by all this (annoying)
+    # print(client.rpc("whoami", {}).execute().data)
     
     # Default to 3 years ago if no start date
     if start_date and start_date not in ["[object Object]", "null", ""]:
@@ -54,32 +57,16 @@ def fetch_chokepoint_metrics(start_date: str = None) -> List[Dict[str, Any]]:
         center_lon = region["center_lon"]
         bbox = region["bounding_box"]
         
-        # Use bounding box for efficient pre-filtering, then precise polygon check
-        # This query filters by bounding box first (fast index), then by polygon containment
-        query = f"""
-        SELECT 
-            COUNT(*) as event_count,
-            COALESCE(SUM(no_of_events), 0) as total_events,
-            COALESCE(SUM(fatalities), 0) as total_fatalities,
-            MAX(week) as last_event_date,
-            AVG(
-                CASE 
-                    WHEN week >= '{filter_date_str}'::date 
-                    THEN EXTRACT(EPOCH FROM (NOW() - week::timestamp)) / 86400.0
-                    ELSE NULL 
-                END
-            ) as avg_recency_days
-        FROM conflict_events_enriched
-        WHERE week >= '{filter_date_str}'
-          AND longitude BETWEEN {bbox[0]} AND {bbox[2]}
-          AND latitude BETWEEN {bbox[1]} AND {bbox[3]}
-          AND ST_Contains(
-              ST_SetSRID(ST_GeomFromGeoJSON('{region["geojson_polygon"]}'), 4326),
-              ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)
-          )
-        """
-        
-        result = client.rpc("exec_sql", {"query": query}).execute()
+        payload = {
+            "filter_date": filter_date_str,
+            "region_geojson": region["geojson_polygon"],
+            "min_lon": float(bbox[0]),
+            "min_lat": float(bbox[1]),
+            "max_lon": float(bbox[2]),
+            "max_lat": float(bbox[3]),
+        }
+
+        result = client.rpc("region_conflict_stats", payload).execute()
         
         # If rpc doesn't work, fallback to Python-side filtering
         if not result.data:

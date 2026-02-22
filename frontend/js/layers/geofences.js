@@ -60,22 +60,41 @@ export async function addGeofenceLayers(map, metricsGeoJSON) {
         const props = feature.properties;
         const coordinates = [props.center_lon, props.center_lat];
 
-        const riskColor = {
-            'high': '#ff3333',
-            'medium': '#ff9933',
-            'low': '#33cc33',
-            'none': '#999999'
-        }[props.risk_level] || '#999999';
+        // const riskColor = {
+        //     'high': '#ff3333',
+        //     'medium': '#ff9933',
+        //     'low': '#33cc33',
+        //     'none': '#999999'
+        // }[props.risk_level] || '#999999';
+
+
+        // Choosing to remove "risk level" for now, its making claims that cant be verified or trusted right now.
+
+        // const html = `
+        //     <div style="font-family: sans-serif; padding: 10px; min-width: 200px;">
+        //         <h3 style="margin: 0 0 10px 0; color: ${riskColor};">${props.display_name}</h3>
+        //         <div style="margin-bottom: 8px;">
+        //             <span style="font-weight: bold;">Risk Level:</span>
+        //             <span style="color: ${riskColor}; text-transform: uppercase; font-weight: bold;">
+        //                 ${props.risk_level}
+        //             </span>
+        //         </div>
+        //         <div style="margin-bottom: 5px;">
+        //             <span style="font-weight: bold;">Events:</span> ${props.event_count}
+        //         </div>
+        //         <div style="margin-bottom: 5px;">
+        //             <span style="font-weight: bold;">Total Fatalities:</span> ${props.total_fatalities}
+        //         </div>
+        //         ${props.last_event_date ? `
+        //         <div style="margin-bottom: 5px; font-size: 0.9em; color: #666;">
+        //             Last event: ${props.last_event_date}
+        //         </div>
+        //         ` : ''}
+        //     </div>
+        // `;
 
         const html = `
             <div style="font-family: sans-serif; padding: 10px; min-width: 200px;">
-                <h3 style="margin: 0 0 10px 0; color: ${riskColor};">${props.display_name}</h3>
-                <div style="margin-bottom: 8px;">
-                    <span style="font-weight: bold;">Risk Level:</span>
-                    <span style="color: ${riskColor}; text-transform: uppercase; font-weight: bold;">
-                        ${props.risk_level}
-                    </span>
-                </div>
                 <div style="margin-bottom: 5px;">
                     <span style="font-weight: bold;">Events:</span> ${props.event_count}
                 </div>
