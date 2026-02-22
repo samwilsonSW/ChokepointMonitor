@@ -8,8 +8,33 @@ Use package-relative imports so this module works when the package
 """
 from datetime import date, datetime, timezone
 from ..supabase_client import _get_client
-def fetch_conflict_events(start_date: str = None):
+from typing import Optional
+
+
+def fetch_conflict_events(start_date: Optional[str] = None, chokepoints_only: bool = False):
+    # Countries with a maritime border on:
+    # - Red Sea
+    # - Persian Gulf
+    # - Gulf of Aden
+    # - Gulf of Oman
+    # - Strait of Malacca
+    countries_with_chokepoint_impact = [
+        # Red Sea
+        "Egypt", "Sudan", "Eritrea", "Djibouti", "Saudi Arabia", "Yemen", "Jordan", "Israel",
+        # Persian Gulf
+        "Iran", "Iraq", "Kuwait", "Bahrain", "Qatar", "United Arab Emirates", "Oman", "Saudi Arabia",
+        # Gulf of Aden
+        "Yemen", "Djibouti", "Somalia",
+        # Gulf of Oman
+        "Oman", "Iran", "Pakistan", "United Arab Emirates",
+        # Strait of Malacca
+        "Indonesia", "Malaysia", "Singapore", "Thailand",
+    ]
+
+    countries_with_chokepoint_impact = list(dict.fromkeys(countries_with_chokepoint_impact))
+
     today = date.today()
+
     # JS trying to send an empty object instead of null, this handles that.
     if start_date and start_date != "[object Object]" and start_date != "null":
         try:
@@ -20,15 +45,15 @@ def fetch_conflict_events(start_date: str = None):
             start_date_obj = date(today.year - 3, 1, 1)
             start_date_str = start_date_obj.isoformat()
     else:
-        
         start_date_obj = date(today.year - 3, 1, 1)
         start_date_str = start_date_obj.isoformat()
+
     print("start date:")
     print(start_date_str)
+
     client = _get_client()
     all_rows = []
-    
-    
+
     PAGE_SIZE = 1000
     offset = 0
 
@@ -36,11 +61,18 @@ def fetch_conflict_events(start_date: str = None):
         query = (
             client
             .table("conflict_events_enriched")
-            .select("week, country, country_admin, event_type, sub_event_type, no_of_events, fatalities, disorder_type, acled_id, latitude, longitude, effective_latitude, effective_longitude") 
+            .select(
+                "week, country, country_admin, event_type, sub_event_type, no_of_events, fatalities, "
+                "disorder_type, acled_id, latitude, longitude, effective_latitude, effective_longitude"
+            )
             .gte("week", start_date_str)
             .order("week", desc=False)
             .range(offset, offset + PAGE_SIZE - 1)
         )
+
+        # If chokepoints_only is true, restrict to impacted countries
+        if chokepoints_only:
+            query = query.in_("country", countries_with_chokepoint_impact)
 
         response = query.execute()
         rows = response.data
@@ -50,7 +82,7 @@ def fetch_conflict_events(start_date: str = None):
 
         all_rows.extend(rows)
         offset += PAGE_SIZE
-        
+
         if len(rows) < PAGE_SIZE:
             break
 
