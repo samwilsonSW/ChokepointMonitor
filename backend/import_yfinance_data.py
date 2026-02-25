@@ -6,14 +6,7 @@ TICKERS = ["CL=F", "BZ=F", "FRO", "STNG", "NG=F"]
 TABLE_NAME = 'financial_prices_daily'
 
 def fetch_full_ohlc(period="2y"):
-    """Fetch OHLCV data for all tracked tickers.
-    
-    Args:
-        period: yfinance period string ("2y" = 2 years, "5y" = 5 years, "max" = all available)
-        
-    Returns:
-        List of dict records ready for database insertion
-    """
+    """Fetch OHLCV data for all tracked tickers."""
     print(f"Fetching {period} of data for tickers: {TICKERS}")
     data = yf.download(TICKERS, period=period, interval="1d")
     
