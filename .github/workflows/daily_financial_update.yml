@@ -32,7 +32,4 @@ jobs:
         EOF
         
     - name: Run financial data update
-      env:
-        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       run: python backend/import_yfinance_data.py
