@@ -2,7 +2,7 @@ name: Daily Financial Price Update
 
 on:
   schedule:
-    # Run daily at 5:00 PM CST (6:00PM CDT) (22:00 UTC) — after market close
+    # Run daily at 5:00 PM CST (4:00 PM CDT) (22:00 UTC) — after market close
     - cron: '0 22 * * *'
   workflow_dispatch:  # Allow manual trigger
 
