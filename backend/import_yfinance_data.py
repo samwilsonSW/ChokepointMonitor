@@ -17,6 +17,7 @@ def fetch_full_ohlc(period="2y"):
     data.columns.names = ['Price_Type', 'Ticker']
     
     data_stacked = data.stack(level='Ticker').reset_index()
+    print(f"Latest date fetched: {data_stacked['Date'].max().date().isoformat()}")
     
     records = []
     for _, row in data_stacked.iterrows():
@@ -54,8 +55,11 @@ def upload_to_supabase(period="2y"):
     for i in range(0, total, batch_size):
         batch = records[i:i+batch_size]
         try:
-            # Use upsert to handle duplicates
-            response = client.table(TABLE_NAME).upsert(batch).execute()
+            response = client.table(TABLE_NAME) \
+                .upsert(batch,
+                    on_conflict="date,ticker",
+                    ignore_duplicates=True) \
+                .execute()
             inserted += len(batch)
             print(f'Upserted records {i+1}-{i+len(batch)}')
         except Exception as e:
