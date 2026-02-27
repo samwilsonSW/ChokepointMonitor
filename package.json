@@ -3,12 +3,21 @@
     "@maptiler/sdk": "^3.11.1"
   },
   "name": "chokepointmonitor",
+  "workspaces": [
+    "frontend-svelte"
+  ],
+  "scripts": {
+    "install:all": "pip install -r backend/requirements.txt && npm install",
+    "dev:frontend": "npm run dev -w frontend-svelte",
+    "dev:backend": "python -m backend.api.main",
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
   "version": "1.0.0",
   "description": "Backend:      Install all required python packages using `pip install -r backend/requirements.txt`<br/>     To run, use command `python -m backend.api.main`",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/samwilsonSW/ChokepointMonitor.git"

@@ -8,4 +8,17 @@ export default defineConfig({
     tailwindcss(),
     svelte()
   ],
-})
+  server: {
+    proxy: {
+      // When the frontend asks for /conflicts, Vite grabs it from port 8000
+      '/conflicts': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/chokepoint-metrics': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      }
+    }
+  }
+});
