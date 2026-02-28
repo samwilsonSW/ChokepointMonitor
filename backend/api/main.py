@@ -55,8 +55,8 @@ def get_chokepoint_metrics(start_date: str = None):
     }
 
   
-# If no endpoint is found ({BASE_URL}/conflicts for example), look in frontend for file
-app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
+
+# app.mount("/", StaticFiles(directory="frontend-svelte/dist", html=True), name="frontend")
 
 if __name__ == "__main__":
     import uvicorn

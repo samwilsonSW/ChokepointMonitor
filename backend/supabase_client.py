@@ -6,9 +6,10 @@ from typing import Optional
 from datetime import date, datetime
 import pandas as pd
 
-# This looks for the .env in the same folder as this script
+# This looks for the .env in the root folder
 BASE_DIR = Path(__file__).resolve().parent
-ENV_PATH = BASE_DIR / ".env"
+ROOT_DIR = BASE_DIR.parents[1] 
+ENV_PATH = ROOT_DIR / ".env"
 
 load_dotenv(dotenv_path=ENV_PATH)
 
