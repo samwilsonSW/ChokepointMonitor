@@ -8,15 +8,15 @@ import pandas as pd
 
 # This looks for the .env in the root folder
 BASE_DIR = Path(__file__).resolve().parent
-ROOT_DIR = BASE_DIR.parents[1] 
+ROOT_DIR = BASE_DIR.parent
 ENV_PATH = ROOT_DIR / ".env"
 
 load_dotenv(dotenv_path=ENV_PATH)
 
-# print("ENV_PATH exists:", ENV_PATH.exists())
-# print("Reading from:", ENV_PATH)
-# print("SUPABASE_URL =", repr(os.getenv("SUPABASE_URL")))
-# print("SUPABASE_KEY =", repr(os.getenv("SUPABASE_KEY")))
+print("ENV_PATH exists:", ENV_PATH.exists())
+print("Reading from:", ENV_PATH)
+print("SUPABASE_URL =", repr(os.getenv("SUPABASE_URL")))
+print("SUPABASE_KEY =", repr(os.getenv("SUPABASE_KEY")))
 
 _supabase: Optional[Client] = None
 

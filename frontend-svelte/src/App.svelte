@@ -2,10 +2,10 @@
   import { onMount } from 'svelte';
   import maplibregl from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
-  import { getConflictGeoJSON, getChokepointMetrics } from '../../frontend-svelte/src/lib/api.js';
-  import { addConflictsLayer } from '../../frontend-svelte/src/lib/layers/chokepoints.js';
-  import { addGeofenceLayers, updateGeofenceData } from '../../frontend-svelte/src/lib/layers/geofences.js';
-  import { addConflictHeatmap2RecencyAffectsDensity } from '../../frontend-svelte/src/lib/layers/heatmap.js';
+  import { getConflictGeoJSON, getChokepointMetrics } from './lib/api.js';
+  import { addConflictsLayer } from './lib/layers/chokepoints.js';
+  import { addGeofenceLayers, updateGeofenceData } from './lib/layers/geofences.js';
+  import { addConflictHeatmap2RecencyAffectsDensity } from './lib/layers/heatmap.js';
 
   let mapContainer; // Reference to the DIV
   let map;
