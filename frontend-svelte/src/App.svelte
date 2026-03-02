@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte';
+  import { AppBar } from '@skeletonlabs/skeleton-svelte';
   import maplibregl from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
   import { getConflictGeoJSON, getChokepointMetrics } from './lib/api.js';
@@ -7,12 +8,11 @@
   import { addGeofenceLayers, updateGeofenceData } from './lib/layers/geofences.js';
   import { addConflictHeatmap2RecencyAffectsDensity } from './lib/layers/heatmap.js';
 
-  let mapContainer; // Reference to the DIV
+  let mapContainer;
   let map;
   let dateInput = "";
 
   onMount(async () => {
-    // Initialize Map
     map = new maplibregl.Map({
       container: mapContainer,
       style: `https://api.maptiler.com/maps/dataviz/style.json?key=${import.meta.env.VITE_MAPTILER_KEY}`,
@@ -45,31 +45,53 @@
   }
 </script>
 
-<div class="controls">
-  <input type="date" bind:value={dateInput} />
-  <button on:click={applyFilter}>Apply Filter</button>
+<div class="layout">
+  <AppBar class="shrink-0">
+    <svelte:fragment slot="lead">
+      <strong class="text-xl">Chokepoint Monitor</strong>
+    </svelte:fragment>
+    
+    <svelte:fragment slot="trail">
+      <div class="flex items-center gap-2">
+        <input 
+          type="date" 
+          bind:value={dateInput}
+          class="input" 
+        />
+        <button 
+          class="btn preset-filled-primary"
+          on:click={applyFilter}
+          disabled={!dateInput}
+        >
+          Apply Filter
+        </button>
+      </div>
+    </svelte:fragment>
+  </AppBar>
+
+  <div class="map-container" bind:this={mapContainer}></div>
 </div>
 
-<div id="map" bind:this={mapContainer}></div>
-
 <style>
-  #map {
+  .layout {
+    display: flex;
+    flex-direction: column;
     width: 100%;
     height: 100vh;
+    overflow: hidden;
+  }
+  
+  .map-container {
+    flex: 1;
+    position: relative;
+    min-height: 0;
+  }
+  
+  :global(.maplibregl-map) {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    height: 100vh;
-    z-index: 1; /* Ensure it's not behind the Skeleton background */
-  }
-  .controls {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    z-index: 100;
-    background: white;
-    padding: 10px;
-    border-radius: 4px;
+    height: 100%;
   }
 </style>
