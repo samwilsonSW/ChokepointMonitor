@@ -7,6 +7,8 @@
     "frontend-svelte"
   ],
   "scripts": {
+    "use:node": "nvm install && nvm use",
+    "preinstall": "node -e \"const [maj,min]=process.versions.node.split('.').map(Number); if(maj<22 || (maj===22 && min<12)) { console.error('\\n❌ Node 22.12+ required. Current: '+process.versions.node+'\\n'); process.exit(1); }\"",
     "install:all": "pip install -r backend/requirements.txt && npm install",
     "dev:frontend": "npm run dev -w frontend-svelte",
     "dev:backend": "python -m backend.api.main",
@@ -29,5 +31,10 @@
   "bugs": {
     "url": "https://github.com/samwilsonSW/ChokepointMonitor/issues"
   },
-  "homepage": "https://github.com/samwilsonSW/ChokepointMonitor#readme"
+  "homepage": "https://github.com/samwilsonSW/ChokepointMonitor#readme",
+  "engines": {
+    "node": ">=22.12.0",
+    "npm": ">=10"
+  },
+  "engineStrict": true
 }
