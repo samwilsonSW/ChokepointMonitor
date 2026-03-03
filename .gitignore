@@ -1,10 +1,9 @@
 # --- Security & Environment ---
 .env
 backend/.env
-# Specifically protecting your Google BigQuery key
 backend/gdelt_pipeline/creds.json
-# Frontend secrets
 frontend/js/config.js
+frontend-svelte/js/config.js
 
 # --- Python ---
 __pycache__/
@@ -31,19 +30,13 @@ wheels/
 .installed.cfg
 *.egg
 
-__pycache__/
-
 # --- Node / Frontend ---
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 .parcel-cache/
 
 # --- Data Files ---
 *.csv
 *.xlsx
-
 
 # Ignore JSON keys/data, but KEEP configuration files
 *.json
@@ -51,11 +44,31 @@ yarn-error.log*
 !jsconfig.json
 !tsconfig.json
 
+# --- Logs ---
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# --- Build Outputs ---
+dist/
+dist-ssr/
+*.local
+
 # --- IDE & Editors ---
 .vscode/
+!.vscode/extensions.json
 .idea/
 *.swp
 *.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 *~
 
 # --- OS Specific ---
