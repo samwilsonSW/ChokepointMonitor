@@ -14,4 +14,7 @@ The project is configured as a monorepo. You can spin up both the Python API and
 ### Quick Start
 1. **Install all dependencies:**
    ```bash
-   npm run install:all
+   npm install
+2. **Run developer build:**
+   ```bash
+   npm run dev
