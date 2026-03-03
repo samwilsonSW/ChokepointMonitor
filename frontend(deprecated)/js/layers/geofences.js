@@ -166,7 +166,6 @@ function addRiskBadges(map, metricsGeoJSON) {
             cursor: pointer;
             white-space: nowrap;
             pointer-events: auto;
-            z-index: 10;
         `;
         
         el.innerHTML = `
