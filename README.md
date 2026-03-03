@@ -2,7 +2,7 @@
 
 A real-time maritime risk visualization tool built with Svelte 5 and Python. This project monitors global maritime chokepoints by correlating conflict event data with geographic geofences.
 
-## 🚀 Getting Started
+## Getting Started
 
 The project is configured as a monorepo. You can spin up both the Python API and the Svelte development server with a single command.
 
