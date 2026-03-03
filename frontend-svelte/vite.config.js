@@ -8,4 +8,18 @@ export default defineConfig({
     tailwindcss(),
     svelte()
   ],
-})
+  // Point to the root directory to find the unified .env file
+  envDir: '../', 
+  server: {
+    proxy: {
+      '/conflicts': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/chokepoint-metrics': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      }
+    }
+  }
+});
