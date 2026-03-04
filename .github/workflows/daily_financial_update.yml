@@ -24,12 +24,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r backend/requirements.txt
 
-    - name: Create .env file (project root expected by supabase_client.py)
-      run: |
-        printf "SUPABASE_URL=%s\nSUPABASE_KEY=%s\n" \
-          "${{ secrets.SUPABASE_URL }}" \
-          "${{ secrets.SUPABASE_KEY }}" \
-          > ChokepointMonitor/.env
-
     - name: Run financial data update
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       run: python backend/import_yfinance_data.py
