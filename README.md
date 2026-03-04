@@ -12,9 +12,9 @@ The project is configured as a monorepo. You can spin up both the Python API and
 - **MapTiler API Key**: Required for base map tiles.
 
 ### Quick Start
-1. **Install all dependencies:**
+1. **Single command to install dependencies and run developer build**
    ```bash
-   npm install
-2. **Run developer build:**
+   npm run install:all && npm run dev
+2. **Run developer build (no dependencies):**
    ```bash
    npm run dev

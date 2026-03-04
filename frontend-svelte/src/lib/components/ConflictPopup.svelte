@@ -14,11 +14,11 @@
   <div class="mb-4 pb-4 border-b border-surface-700">
     <h2 class="text-2xl font-bold text-white mb-1">{country} - {admin}</h2>
     {#if coordinates.length === 2}
-      <p class="text-xs text-surface-300 font-mono">
+      <p class="text-md text-surface-200 font-mono">
         {coordinates[1].toFixed(4)}, {coordinates[0].toFixed(4)}
       </p>
     {/if}
-    <p class="text-sm text-surface-400 mt-2">
+    <p class="text-md text-surface-100 mt-2">
       {eventCount} event{eventCount > 1 ? 's' : ''} at this location since {firstEventDate}
     </p>
   </div>
@@ -29,12 +29,12 @@
         <div class="font-semibold text-surface-100 text-sm">
           {props.event_type || 'Conflict Event'}
         </div>
-        <div class="flex gap-4 mt-1 text-xs text-surface-600">
+        <div class="flex gap-4 mt-1 text-xs text-surface-100">
           <span>📅 {props.week || 'Unknown'}</span>
           <span>💀 {props.fatalities || 0} fatalities</span>
         </div>
         {#if props.sub_event_type}
-          <div class="text-xs text-surface-500 italic mt-1">
+          <div class="text-xs text-surface-100 italic mt-1">
             {props.sub_event_type}
           </div>
         {/if}

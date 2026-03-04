@@ -134,10 +134,12 @@ export async function addConflictsLayer(map, geoJsonData, onSelect) {
         map.once('moveend', onMoveEnd);
     });
 
-    (window).clearMapHighlight = () => {
-        map.getSource('selected-point').setData({
-            type: 'FeatureCollection',
-            features: []
-        });
+    return {
+        clearMapHighlight: () => {
+            map.getSource('selected-point').setData({
+                type: 'FeatureCollection',
+                features: []
+            });
+        }
     };
 }

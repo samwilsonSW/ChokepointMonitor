@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 <script>
   import { onMount } from 'svelte';
 
@@ -28,12 +26,50 @@
     isDrawerOpen = true;
   }
 
+  $: if (!isDrawerOpen && typeof clearMapHighlight === 'function') {
+    clearMapHighlight();
+  }
+
+
   function handleOpenChange(details) {
+    console.log('Drawer change detected. New state:', details.open);
+    
+    // 1. Manually update the state
     isDrawerOpen = details.open;
-    if (!details.open && window.clearMapHighlight) {
-        window.clearMapHighlight();
+
+    // 2. If it's closing, run the cleanup
+    if (details.open === false) {
+      console.log('Closing drawer, attempting to clear highlight...');
+      
+      // Use a small timeout or check to ensure clearMapHighlight exists
+      if (clearMapHighlight) {
+          clearMapHighlight();
+      } else {
+          console.warn('clearMapHighlight is not defined yet!');
+      }
     }
-}
+  }
+
+  // function handleOpenChange(details) {
+  //   isDrawerOpen = details.open;
+  // }
+
+
+
+
+  // function handleOpenChange(details) {
+  //   console.log('Drawer state changing. Current clearMapHighlights:', clearMapHighlight);
+  //   console.log('handleOpenChange called, open:', details.open)
+  //   console.log('clearMapHighlight is: ', clearMapHighlight)
+  //   isDrawerOpen = details.open;
+  //   if (!details.open && clearMapHighlight) {
+  //       console.log('Calling clearMapHighlight');
+  //       clearMapHighlight();
+  //   }
+  //   else if (!details.open) {
+  //     console.log('NOT calling clearMapHighlight is falsy');
+  //   }
+  // }
 
   onMount(async () => {
     map = new maplibregl.Map({
@@ -50,7 +86,9 @@
       ]);
 
       const layerResult = await addConflictsLayer(map, geoJsonData, openConflictDrawer);
-      clearMapHighlight = layerResult?.clearHighlight || null;
+      console.log('layerResult:', layerResult);
+      clearMapHighlight = layerResult?.clearMapHighlight || null;
+      console.log('clearMapHighlight:', clearMapHighlight)
 
       await addGeofenceLayers(map, metricsData);
       await addConflictHeatmap2RecencyAffectsDensity(map, geoJsonData);
@@ -98,7 +136,7 @@
 </div>
 
 
-<Dialog open={isDrawerOpen} onOpenChange={(e) => isDrawerOpen = e.open}>
+<Dialog open={isDrawerOpen} onOpenChange={handleOpenChange}>
   <Dialog.Trigger />
 
   <Portal>
