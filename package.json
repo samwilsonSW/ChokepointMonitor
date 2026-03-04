@@ -1,11 +1,15 @@
 {
-  "dependencies": {
-    "@maptiler/sdk": "^3.11.1"
-  },
   "name": "chokepointmonitor",
+  "version": "1.0.0",
+  "type": "commonjs",
   "workspaces": [
     "frontend-svelte"
   ],
+  "engines": {
+    "node": ">=22.12.0",
+    "npm": ">=10"
+  },
+  "engineStrict": true,
   "scripts": {
     "use:node": "nvm install && nvm use",
     "preinstall": "node -e \"const [maj,min]=process.versions.node.split('.').map(Number); if(maj<22 || (maj===22 && min<12)) { console.error('\\n❌ Node 22.12+ required. Current: '+process.versions.node+'\\n'); process.exit(1); }\"",
@@ -14,27 +18,18 @@
     "dev:backend": "python -m backend.api.main",
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\""
   },
+  "dependencies": {
+    "@maptiler/sdk": "^3.11.1",
+    "@skeletonlabs/skeleton": "^4.12.1",
+    "@skeletonlabs/skeleton-svelte": "^4.12.1",
+    "@tailwindcss/vite": "^4.2.1",
+    "maplibre-gl": "^5.19.0",
+    "tailwindcss": "^4.2.1"
+  },
   "devDependencies": {
-    "concurrently": "^8.2.2"
-  },
-  "version": "1.0.0",
-  "description": "Backend:      Install all required python packages using `pip install -r backend/requirements.txt`<br/>     To run, use command `python -m backend.api.main`",
-  "main": "index.js",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/samwilsonSW/ChokepointMonitor.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/samwilsonSW/ChokepointMonitor/issues"
-  },
-  "homepage": "https://github.com/samwilsonSW/ChokepointMonitor#readme",
-  "engines": {
-    "node": ">=22.12.0",
-    "npm": ">=10"
-  },
-  "engineStrict": true
+    "@sveltejs/vite-plugin-svelte": "^6.2.4",
+    "concurrently": "^9.2.1",
+    "svelte": "^5.45.2",
+    "vite": "^7.3.1"
+  }
 }

@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 <script>
   import { onMount } from 'svelte';
 
@@ -19,16 +21,19 @@
   let mapContainer;
   let map;
   let dateInput = "";
+  let clearMapHighlight = null;
 
   function openConflictDrawer(events) {
     selectedEvents = events;
     isDrawerOpen = true;
   }
 
-// Required for v3 to sync state when clicking the backdrop/esc key
   function handleOpenChange(details) {
     isDrawerOpen = details.open;
-  }
+    if (!details.open && window.clearMapHighlight) {
+        window.clearMapHighlight();
+    }
+}
 
   onMount(async () => {
     map = new maplibregl.Map({
@@ -44,7 +49,9 @@
         getChokepointMetrics()
       ]);
 
-      await addConflictsLayer(map, geoJsonData, openConflictDrawer);
+      const layerResult = await addConflictsLayer(map, geoJsonData, openConflictDrawer);
+      clearMapHighlight = layerResult?.clearHighlight || null;
+
       await addGeofenceLayers(map, metricsData);
       await addConflictHeatmap2RecencyAffectsDensity(map, geoJsonData);
     });
@@ -95,7 +102,7 @@
   <Dialog.Trigger />
 
   <Portal>
-    <Dialog.Backdrop class="fixed inset-0 z-[9999] bg-black/40 backdrop-blur-sm" />
+    <Dialog.Backdrop class="fixed inset-0 z-[9999] bg-black/20" />
 
     <Dialog.Content 
       class="fixed inset-y-0 right-0 z-[10000] w-full max-w-[420px] bg-surface-900 border-l border-white/10 shadow-2xl flex flex-col"

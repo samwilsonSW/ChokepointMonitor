@@ -4,31 +4,48 @@
  * @param {Function} onSelect - The openConflictDrawer function from App.svelte
 */
 
-import maplibregl from 'maplibre-gl';
-import ConflictPopup from '../components/ConflictPopup.svelte';
-import { mountPopupComponent, unmountPopupComponent } from '../utils/popupMount.js';
-
 export async function addConflictsLayer(map, geoJsonData, onSelect) {
     if (!geoJsonData) {
         console.error("Failed to load conflict GeoJSON");
         return;
     }
     
+    // Sources
     map.addSource('conflict-events', {
         type: 'geojson',
         data: geoJsonData
     });
 
+    map.addSource('selected-point', {
+        type: 'geojson',
+        data: {
+            type: 'FeatureCollection',
+            features: []
+        }
+    });
+
+    // >Sources
+
+    // Layers
+
+    // invisible hitbox for points, makes clicking easier without needing to make the visible circles bigger
+    map.addLayer({
+        id: 'conflict-hitbox',
+        type: 'circle',
+        source: 'conflict-events',
+        paint: {
+            'circle-radius': 12,
+            'circle-opacity': 0
+        }
+    });
+
+    // visible layer
     map.addLayer({
         id: 'conflict-circles',
         type: 'circle',
         source: 'conflict-events',
         paint: {
-            'circle-radius': [
-                'interpolate', ['linear'], ['zoom'],
-                3, 3,
-                10, 8
-            ],
+            'circle-radius': 4,
             'circle-color': '#f04dff',
             'circle-opacity': 0.2,
             'circle-stroke-width': 0.5,
@@ -36,6 +53,43 @@ export async function addConflictsLayer(map, geoJsonData, onSelect) {
         }
     });
 
+    // highlights selected point with a bright green halo and center dot
+    map.addLayer({
+        id: 'selected-point-highlight',
+        type: 'circle',
+        source: 'selected-point',
+        paint: {
+            'circle-radius': [
+                'interpolate', ['linear'], ['zoom'],
+                3, 15,
+                10, 35
+            ],
+            'circle-color': 'transparent',
+            'circle-stroke-width': 3,
+            'circle-stroke-color': '#00ff88',  // Bright green
+            'circle-opacity': 0,
+            'circle-stroke-opacity': 0.9
+        }
+    });
+
+    // show center of highlighted point with a smaller solid circle
+    map.addLayer({
+        id: 'selected-point-center',
+        type: 'circle',
+        source: 'selected-point',
+        paint: {
+            'circle-radius': [
+                'interpolate', ['linear'], ['zoom'],
+                3, 6,
+                10, 12
+            ],
+            'circle-color': '#00ff88',
+            'circle-opacity': 0.8
+        }
+    });
+    // >Layers
+
+    // Hovers & Clicks
     map.on('mouseenter', 'conflict-circles', () => {
         map.getCanvas().style.cursor = 'pointer';
     });
@@ -44,63 +98,46 @@ export async function addConflictsLayer(map, geoJsonData, onSelect) {
         map.getCanvas().style.cursor = '';
     });
 
-    let currentPopup = null;
-    let currentPopupContainer = null;
-
-    // map.on('click', 'conflict-circles', (e) => {
-    //     const coordinates = e.features[0].geometry.coordinates.slice();
-    //     const features = e.features;
-
-    //     // Clean up previous popup
-    //     if (currentPopup) {
-    //         if (currentPopupContainer) {
-    //             unmountPopupComponent(currentPopupContainer);
-    //         }
-    //         currentPopup.remove();
-    //     }
-
-    //     while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-    //         coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
-    //     }
-
-    //     const popupContainer = mountPopupComponent(ConflictPopup, {
-    //         events: features
-    //     });
-        
-    //     currentPopupContainer = popupContainer;
-        
-    //     currentPopup = new maplibregl.Popup({ 
-    //         maxWidth: '320px',
-    //         closeOnClick: false
-    //     })
-    //         .setLngLat(coordinates)
-    //         .setDOMContent(popupContainer)
-    //         .addTo(map);
-
-    //     currentPopup.on('close', () => {
-    //         unmountPopupComponent(popupContainer);
-    //         currentPopupContainer = null;
-    //     });
-    // });
-
-
     map.on('click', 'conflict-circles', (e) => {
-        // 1. Get the data from the clicked features
         const features = e.features;
+        const coordinates = e.features[0].geometry.coordinates.slice();
 
-        // 2. Trigger the Svelte drawer via the callback
-        // This replaces all the 'mountPopupComponent' and 'new maplibregl.Popup' code
-        if (onSelect) {
-            onSelect(features);
-        }
-
-        // 3. Optional: Smoothly pan the map so the clicked point 
-        // isn't hidden under the drawer (optional but recommended for UX)
-        map.easeTo({
-            center: e.lngLat,
-            offset: [-150, 0], // Shifts the map center 150px to the left
-            duration: 500
+        // update highlight source to clicked point
+        map.getSource('selected-point').setData({
+            type: 'FeatureCollection',
+            features: [{
+                type: 'Feature',
+                geometry: {
+                    type: 'Point',
+                    coordinates: coordinates
+                },
+                properties: {}
+            }]
         });
+
+        // zoom into location
+        map.flyTo({
+            center: coordinates,
+            zoom: 6,  
+            offset: [-210, 0],  // Shift left (-210 length of sidebar)
+            duration: 800,  // ms animation duration
+            essential: true
+        });
+
+        const onMoveEnd = () => {
+            if (onSelect) {
+                onSelect(features, coordinates);  // Pass coordinates too
+            }
+            map.off('moveend', onMoveEnd);
+        };
+        
+        map.once('moveend', onMoveEnd);
     });
 
+    (window).clearMapHighlight = () => {
+        map.getSource('selected-point').setData({
+            type: 'FeatureCollection',
+            features: []
+        });
+    };
 }

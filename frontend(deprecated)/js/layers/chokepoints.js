@@ -79,5 +79,14 @@ export async function addConflictsLayer(map, geoJsonData) {
             .setLngLat(coordinates)
             .setHTML(html)
             .addTo(map);
+
+        return {
+            clearHighlight: () => {
+                map.getSource('selected-point').setData({
+                    type: 'FeatureCollection',
+                    features: []
+                });
+            }
+        };
     });
 }
