@@ -1,8 +1,14 @@
+/**
+ * @param {Object} map - MapLibre instance
+ * @param {Object} geoJsonData - Conflict data
+ * @param {Function} onSelect - The openConflictDrawer function from App.svelte
+*/
+
 import maplibregl from 'maplibre-gl';
 import ConflictPopup from '../components/ConflictPopup.svelte';
 import { mountPopupComponent, unmountPopupComponent } from '../utils/popupMount.js';
 
-export async function addConflictsLayer(map, geoJsonData) {
+export async function addConflictsLayer(map, geoJsonData, onSelect) {
     if (!geoJsonData) {
         console.error("Failed to load conflict GeoJSON");
         return;
@@ -41,39 +47,60 @@ export async function addConflictsLayer(map, geoJsonData) {
     let currentPopup = null;
     let currentPopupContainer = null;
 
+    // map.on('click', 'conflict-circles', (e) => {
+    //     const coordinates = e.features[0].geometry.coordinates.slice();
+    //     const features = e.features;
+
+    //     // Clean up previous popup
+    //     if (currentPopup) {
+    //         if (currentPopupContainer) {
+    //             unmountPopupComponent(currentPopupContainer);
+    //         }
+    //         currentPopup.remove();
+    //     }
+
+    //     while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+    //         coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+    //     }
+
+    //     const popupContainer = mountPopupComponent(ConflictPopup, {
+    //         events: features
+    //     });
+        
+    //     currentPopupContainer = popupContainer;
+        
+    //     currentPopup = new maplibregl.Popup({ 
+    //         maxWidth: '320px',
+    //         closeOnClick: false
+    //     })
+    //         .setLngLat(coordinates)
+    //         .setDOMContent(popupContainer)
+    //         .addTo(map);
+
+    //     currentPopup.on('close', () => {
+    //         unmountPopupComponent(popupContainer);
+    //         currentPopupContainer = null;
+    //     });
+    // });
+
+
     map.on('click', 'conflict-circles', (e) => {
-        const coordinates = e.features[0].geometry.coordinates.slice();
+        // 1. Get the data from the clicked features
         const features = e.features;
 
-        // Clean up previous popup
-        if (currentPopup) {
-            if (currentPopupContainer) {
-                unmountPopupComponent(currentPopupContainer);
-            }
-            currentPopup.remove();
+        // 2. Trigger the Svelte drawer via the callback
+        // This replaces all the 'mountPopupComponent' and 'new maplibregl.Popup' code
+        if (onSelect) {
+            onSelect(features);
         }
 
-        while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
-        }
-
-        const popupContainer = mountPopupComponent(ConflictPopup, {
-            events: features
-        });
-        
-        currentPopupContainer = popupContainer;
-        
-        currentPopup = new maplibregl.Popup({ 
-            maxWidth: '320px',
-            closeOnClick: false
-        })
-            .setLngLat(coordinates)
-            .setDOMContent(popupContainer)
-            .addTo(map);
-
-        currentPopup.on('close', () => {
-            unmountPopupComponent(popupContainer);
-            currentPopupContainer = null;
+        // 3. Optional: Smoothly pan the map so the clicked point 
+        // isn't hidden under the drawer (optional but recommended for UX)
+        map.easeTo({
+            center: e.lngLat,
+            offset: [-150, 0], // Shifts the map center 150px to the left
+            duration: 500
         });
     });
+
 }

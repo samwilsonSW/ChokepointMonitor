@@ -57,3 +57,24 @@ html, body {
   width: 100%;
   height: 100%;
 }
+
+
+/* Ensure the Skeleton Dialog is always the top-most layer */
+:global(.fixed.inset-y-0.right-0) {
+    z-index: 10000 !important;
+}
+
+/* Ensure the backdrop covers everything including map markers */
+:global(.fixed.inset-0.bg-black\/40) {
+    z-index: 9999 !important;
+}
+
+/* Clean up the default MapLibre popup style if they look messy 
+   next to your sleek Skeleton UI */
+:global(.maplibregl-popup-content) {
+    background-color: #1f2937 !important; /* surface-800 */
+    color: white !important;
+    border-radius: 8px !important;
+    padding: 10px !important;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
