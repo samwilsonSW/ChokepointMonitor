@@ -28,8 +28,5 @@ jobs:
       env:
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-<<<<<<< HEAD
       run: python backend/import_yfinance_data.py
-=======
-      run: python backend/import_yfinance_data.py
->>>>>>> aba8459d660903d46a28168691071bdbb5395f95
+
