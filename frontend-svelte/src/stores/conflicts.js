@@ -1,5 +1,5 @@
 import { writable, derived } from 'svelte/store';
-import { getConflictGeoJSON, getChokepointMetrics } from './lib/api.js';
+import { getConflictGeoJSON, getChokepointMetrics } from '../lib/api.js';
 
 /**
  * Conflict Data Store
