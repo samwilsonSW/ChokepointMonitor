@@ -47,7 +47,7 @@ export async function addConflictsLayer(map, geoJsonData, onSelect) {
         paint: {
             'circle-radius': 4,
             'circle-color': '#f04dff',
-            'circle-opacity': 0.2,
+            'circle-opacity': 0.0,
             'circle-stroke-width': 0.5,
             'circle-stroke-color': '#ffffff'
         }
