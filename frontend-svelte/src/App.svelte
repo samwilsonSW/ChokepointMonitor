@@ -2,14 +2,13 @@
   import { onMount } from 'svelte';
 
   // skeleton components
-  import { AppBar, Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
+  import { AppBar, Dialog, Portal, Slider } from '@skeletonlabs/skeleton-svelte';
   import { fly, fade } from 'svelte/transition';
   import ConflictPopup from './lib/components/ConflictPopup.svelte';
 
-
   import maplibregl from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
-  import { getConflictGeoJSON, getChokepointMetrics } from './lib/api.js';
+  import { conflictStore, sliderTicks, dateRangeLabel } from './stores/conflicts.js';
   import { addConflictsLayer } from './lib/layers/chokepoints.js';
   import { addGeofenceLayers, updateGeofenceData } from './lib/layers/geofences.js';
   import { addConflictHeatmap2RecencyAffectsDensity } from './lib/layers/heatmap.js';
@@ -18,8 +17,13 @@
   let selectedEvents = [];
   let mapContainer;
   let map;
-  let dateInput = "";
   let clearMapHighlight = null;
+
+  // Local slider state (bound to RangeSlider)
+  let localSliderValue = [0, 0];
+  
+  // Sync local slider with store
+  $: localSliderValue = $conflictStore.sliderValue;
 
   function openConflictDrawer(events) {
     selectedEvents = events;
@@ -30,46 +34,42 @@
     clearMapHighlight();
   }
 
-
   function handleOpenChange(details) {
-    console.log('Drawer change detected. New state:', details.open);
-    
-    // 1. Manually update the state
     isDrawerOpen = details.open;
-
-    // 2. If it's closing, run the cleanup
-    if (details.open === false) {
-      console.log('Closing drawer, attempting to clear highlight...');
-      
-      // Use a small timeout or check to ensure clearMapHighlight exists
-      if (clearMapHighlight) {
-          clearMapHighlight();
-      } else {
-          console.warn('clearMapHighlight is not defined yet!');
-      }
+    if (details.open === false && clearMapHighlight) {
+      clearMapHighlight();
     }
   }
 
-  // function handleOpenChange(details) {
-  //   isDrawerOpen = details.open;
-  // }
+  /**
+   * Handle slider value changes with debounce
+   */
+  let sliderDebounce;
+  function handleSliderChange(e) {
+    localSliderValue = e.value;
+    clearTimeout(sliderDebounce);
+    sliderDebounce = setTimeout(() => {
+      conflictStore.setSliderValue(e.value);
+    }, 50);
+  }
 
-
-
-
-  // function handleOpenChange(details) {
-  //   console.log('Drawer state changing. Current clearMapHighlights:', clearMapHighlight);
-  //   console.log('handleOpenChange called, open:', details.open)
-  //   console.log('clearMapHighlight is: ', clearMapHighlight)
-  //   isDrawerOpen = details.open;
-  //   if (!details.open && clearMapHighlight) {
-  //       console.log('Calling clearMapHighlight');
-  //       clearMapHighlight();
-  //   }
-  //   else if (!details.open) {
-  //     console.log('NOT calling clearMapHighlight is falsy');
-  //   }
-  // }
+  /**
+   * Update map sources when filtered data changes
+   * This runs reactively whenever the store's filteredData updates
+   */
+  $: if (map && $conflictStore.filteredData.length >= 0) {
+    const geojson = {
+      type: 'FeatureCollection',
+      features: $conflictStore.filteredData
+    };
+    
+    if (map.getSource('conflict-events')) {
+      map.getSource('conflict-events').setData(geojson);
+    }
+    if (map.getSource('conflict-heatmap')) {
+      map.getSource('conflict-heatmap').setData(geojson);
+    }
+  }
 
   onMount(async () => {
     map = new maplibregl.Map({
@@ -80,32 +80,22 @@
     });
 
     map.on('load', async () => {
-      const [geoJsonData, metricsData] = await Promise.all([
-        getConflictGeoJSON(),
-        getChokepointMetrics()
-      ]);
-
-      const layerResult = await addConflictsLayer(map, geoJsonData, openConflictDrawer);
-      console.log('layerResult:', layerResult);
+      // Phase 1: Load YTD data
+      const { geoJson: ytdGeoJson, metrics: ytdMetrics } = await conflictStore.loadYTD();
+      
+      // Render initial layers
+      const layerResult = await addConflictsLayer(map, ytdGeoJson, openConflictDrawer);
       clearMapHighlight = layerResult?.clearMapHighlight || null;
-      console.log('clearMapHighlight:', clearMapHighlight)
+      await addGeofenceLayers(map, ytdMetrics);
+      await addConflictHeatmap2RecencyAffectsDensity(map, ytdGeoJson);
 
-      await addGeofenceLayers(map, metricsData);
-      await addConflictHeatmap2RecencyAffectsDensity(map, geoJsonData);
+      // Phase 2: Background load full history
+      const { metrics: fullMetrics } = await conflictStore.loadFullHistory();
+      
+      // Update geofences with full metrics
+      updateGeofenceData(map, fullMetrics);
     });
   });
-
-  async function applyFilter() {
-    if (!dateInput) return;
-    const [newGeoJson, newMetrics] = await Promise.all([
-      getConflictGeoJSON(dateInput),
-      getChokepointMetrics(dateInput)
-    ]);
-
-    map.getSource('conflict-events')?.setData(newGeoJson);
-    map.getSource('conflict-heatmap')?.setData(newGeoJson);
-    updateGeofenceData(map, newMetrics);
-  }
 </script>
 
 <div class="layout">
@@ -115,26 +105,59 @@
     </svelte:fragment>
     
     <svelte:fragment slot="trail">
-      <div class="flex items-center gap-2">
-        <input 
-          type="date" 
-          bind:value={dateInput}
-          class="input" 
-        />
-        <button 
-          class="btn preset-filled-primary"
-          on:click={applyFilter}
-          disabled={!dateInput}
-        >
-          Apply Filter
-        </button>
-      </div>
+      <!-- Date Range Slider - full width below AppBar -->
     </svelte:fragment>
   </AppBar>
 
+  <!-- Full-width Date Range Slider -->
+  <div class="slider-container bg-surface-800 border-b border-surface-700 px-4 py-2">
+    <div class="flex items-center gap-4">
+      <span class="text-sm text-surface-300 whitespace-nowrap">Date Range:</span>
+      {#if $sliderTicks.length > 0}
+        <div class="flex-1 min-w-0">
+          <!-- 
+            Slider from @skeletonlabs/skeleton-svelte
+            Docs: https://www.skeleton.dev/docs/svelte/framework-components/slider
+            Uses compound component pattern for range selection
+          -->
+          <Slider
+            value={localSliderValue}
+            min={$conflictStore.dataRange.min}
+            max={$conflictStore.dataRange.max}
+            step={null}
+            onValueChange={handleSliderChange}
+          >
+            <Slider.Control>
+              <Slider.Track class="bg-surface-600 h-2 rounded-full">
+                <Slider.Range class="bg-primary-500 h-2 rounded-full" />
+              </Slider.Track>
+              <Slider.Thumb index={0} class="w-4 h-4 bg-primary-500 rounded-full border-2 border-surface-900">
+                <Slider.HiddenInput />
+              </Slider.Thumb>
+              <Slider.Thumb index={1} class="w-4 h-4 bg-primary-500 rounded-full border-2 border-surface-900">
+                <Slider.HiddenInput />
+              </Slider.Thumb>
+            </Slider.Control>
+            <Slider.MarkerGroup>
+              {#each $sliderTicks as tick}
+                <Slider.Marker value={tick.value}>
+                  <span class="text-xs text-surface-400 whitespace-nowrap">{tick.label}</span>
+                </Slider.Marker>
+              {/each}
+            </Slider.MarkerGroup>
+          </Slider>
+        </div>
+        <span class="text-xs text-surface-400 whitespace-nowrap">
+          {$dateRangeLabel}
+        </span>
+      {:else}
+        <span class="text-sm text-surface-400">Loading date range...</span>
+      {/if}
+    </div>
+  </div>
+
   <div class="map-container" bind:this={mapContainer}></div>
 </div>
-
 
 <Dialog open={isDrawerOpen} onOpenChange={handleOpenChange}>
   <Dialog.Trigger />
@@ -144,7 +167,6 @@
 
     <Dialog.Content 
       class="fixed inset-y-0 right-0 z-[10000] w-full max-w-[420px] bg-surface-900 border-l border-white/10 shadow-2xl flex flex-col"
-      
     >
       <header class="p-4 border-b border-white/10 flex justify-between items-center bg-surface-800">
         <h2 class="text-xl font-bold text-white">Conflict Events</h2>
@@ -159,7 +181,6 @@
     </Dialog.Content>
   </Portal>
 </Dialog>
-  
 
 <style>
   .layout {
@@ -168,6 +189,11 @@
     width: 100%;
     height: 100vh;
     overflow: hidden;
+  }
+  
+  .slider-container {
+    width: 100%;
+    flex-shrink: 0;
   }
   
   .map-container {
