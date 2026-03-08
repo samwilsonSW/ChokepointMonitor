@@ -174,55 +174,75 @@ export const conflictStore = createConflictStore();
 
 /**
  * Derived store for slider tick marks
- * Generates month-boundary ticks between min and max dates
+ * Generates quarterly ticks (every 3 months) between min and max dates
  * 
- * To change step values, modify generateMonthTicks:
- *   - Weekly: increment by 7 days
- *   - Quarterly: filter month % 3 === 0
- *   - Yearly: only month === 0
+ * To change step values:
+ *   - Monthly: d.setMonth(d.getMonth() + 1)
+ *   - Quarterly: d.setMonth(d.getMonth() + 3) [current]
+ *   - Yearly: d.setMonth(d.getMonth() + 12)
  */
 export const sliderTicks = derived(conflictStore, $store => {
   const { dataRange } = $store;
   if (!dataRange.min || !dataRange.max) return [];
-  
+
   const ticks = [];
   const d = new Date(dataRange.min);
   d.setDate(1); // First of month
-  
+
   const endDate = new Date(dataRange.max);
-  
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  
+
   while (d <= endDate) {
     ticks.push({
       value: d.getTime(),
       label: `${monthNames[d.getMonth()]} ${d.getFullYear()}`
     });
-    d.setMonth(d.getMonth() + 1);
+    d.setMonth(d.getMonth() + 3); // Quarterly ticks
   }
-  
+
   return ticks;
 });
 
 /**
+ * Helper: format timestamp as MM/DD/YYYY
+ */
+function formatDateMMDDYYYY(timestamp) {
+  const d = new Date(timestamp);
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  return `${mm}/${dd}/${yyyy}`;
+}
+
+/**
  * Derived store for formatted date range display
+ * Format: MM/DD/YYYY - MM/DD/YYYY
  */
 export const dateRangeLabel = derived(conflictStore, $store => {
   const { sliderValue, loadState } = $store;
-  
+
   if (loadState === 'idle' || loadState === 'ytd-loading') {
     return 'Loading...';
   }
   if (loadState === 'ytd-ready' || loadState === 'full-loading') {
     return 'YTD loaded • fetching history...';
   }
-  
-  const start = new Date(sliderValue[0]);
-  const end = new Date(sliderValue[1]);
-  
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  
-  return `${monthNames[start.getMonth()]} ${start.getFullYear()} - ${monthNames[end.getMonth()]} ${end.getFullYear()}`;
+
+  return `${formatDateMMDDYYYY(sliderValue[0])} - ${formatDateMMDDYYYY(sliderValue[1])}`;
+});
+
+/**
+ * Derived store for current slider thumb labels (tooltips)
+ * Returns [startLabel, endLabel] in MM/DD/YYYY format
+ */
+export const sliderThumbLabels = derived(conflictStore, $store => {
+  const { sliderValue, loadState } = $store;
+
+  if (loadState === 'idle' || loadState === 'ytd-loading') {
+    return ['', ''];
+  }
+
+  return [formatDateMMDDYYYY(sliderValue[0]), formatDateMMDDYYYY(sliderValue[1])];
 });
