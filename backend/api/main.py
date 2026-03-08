@@ -15,23 +15,38 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
+# Thread pool for running sync Supabase calls
+_executor = ThreadPoolExecutor(max_workers=4)
+
 @app.get("/conflicts")
-def get_conflicts(start_date: str = None):
-  rows = fetch_conflict_events(start_date=start_date, chokepoints_only=True)
-#   rows = fetch_conflict_events(start_date=start_date)
-  geojson = conflicts_to_geojson(rows)
-  return geojson
+async def get_conflicts(start_date: str = None):
+    # Run sync Supabase call in thread pool to avoid blocking event loop
+    rows = await asyncio.get_event_loop().run_in_executor(
+        _executor,
+        fetch_conflict_events,
+        start_date,
+        True  # chokepoints_only
+    )
+    geojson = conflicts_to_geojson(rows)
+    return geojson
 
 
 @app.get("/chokepoint-metrics")
-def get_chokepoint_metrics(start_date: str = None):
+async def get_chokepoint_metrics(start_date: str = None):
     """
     Get aggregated conflict metrics for each chokepoint region.
-    
+
     Returns metrics including event counts, fatalities, risk levels,
     and geospatial data for rendering region polygons and badges.
     """
-    metrics = fetch_chokepoint_metrics(start_date=start_date)
+    metrics = await asyncio.get_event_loop().run_in_executor(
+        _executor,
+        fetch_chokepoint_metrics,
+        start_date
+    )
     return {
         "type": "FeatureCollection",
         "features": [
