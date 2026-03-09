@@ -1,6 +1,7 @@
 <script>
   export let events = [];
-  
+  export let regionName = null;  // Set when opened from geofence click
+
   $: eventCount = events.length;
   // Get country from first event (all should be same location)
   $: country = events[0]?.properties?.country || events[0]?.properties?.admin1 || 'Unknown Location';
@@ -10,9 +11,16 @@
 </script>
 
 <div class="h-full flex flex-col">
-  <!-- Country Header - Big and prominent -->
+  <!-- Header - Shows region name if from geofence, otherwise country/admin -->
   <div class="mb-4 pb-4 border-b border-surface-700">
-    <h2 class="text-2xl font-bold text-white mb-1">{country} - {admin}</h2>
+    {#if regionName}
+      <h2 class="text-2xl font-bold text-white mb-1">{regionName}</h2>
+      <p class="text-md text-surface-200">
+        {country} - {admin}
+      </p>
+    {:else}
+      <h2 class="text-2xl font-bold text-white mb-1">{country} - {admin}</h2>
+    {/if}
     {#if coordinates.length === 2}
       <p class="text-md text-surface-200 font-mono">
         {coordinates[1].toFixed(4)}, {coordinates[0].toFixed(4)}

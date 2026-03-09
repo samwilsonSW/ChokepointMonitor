@@ -15,6 +15,7 @@
 
   let isDrawerOpen = false;
   let selectedEvents = [];
+  let selectedRegionName = null;  // Set when opened from geofence click
   let mapContainer;
   let map;
   let clearMapHighlight = null;
@@ -25,19 +26,22 @@
   // Sync local slider with store
   $: localSliderValue = $conflictStore.sliderValue;
 
-  function openConflictDrawer(events) {
+  function openConflictDrawer(events, regionName = null) {
     selectedEvents = events;
+    selectedRegionName = regionName;
     isDrawerOpen = true;
   }
 
   $: if (!isDrawerOpen && typeof clearMapHighlight === 'function') {
     clearMapHighlight();
+    selectedRegionName = null;  // Reset when drawer closes
   }
 
   function handleOpenChange(details) {
     isDrawerOpen = details.open;
-    if (details.open === false && clearMapHighlight) {
-      clearMapHighlight();
+    if (details.open === false) {
+      if (clearMapHighlight) clearMapHighlight();
+      selectedRegionName = null;
     }
   }
 
@@ -95,7 +99,7 @@
     });
 
     if (eventsInGeofence.length > 0) {
-      openConflictDrawer(eventsInGeofence);
+      openConflictDrawer(eventsInGeofence, properties.display_name);
     }
   }
 
@@ -210,7 +214,7 @@
       </header>
 
       <div class="flex-1 overflow-y-auto p-4">
-        <ConflictPopup events={selectedEvents} />
+        <ConflictPopup events={selectedEvents} regionName={selectedRegionName} />
       </div>
     </Dialog.Content>
   </Portal>
