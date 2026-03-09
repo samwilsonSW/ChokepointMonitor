@@ -174,7 +174,21 @@ export function updateGeofenceData(map, newMetricsGeoJSON) {
     const source = map.getSource('chokepoint-geofences');
     if (source) {
         source.setData(newMetricsGeoJSON);
+        addRiskBadges(map, newMetricsGeoJSON);
     }
-    
-    addRiskBadges(map, newMetricsGeoJSON);
+}
+
+/**
+ * Initialize geofence layers if they don't exist, or update if they do
+ * Safe to call multiple times - handles both initial load and updates
+ */
+export function initGeofenceLayers(map, metricsGeoJSON) {
+    const source = map.getSource('chokepoint-geofences');
+    if (source) {
+        // Layers already exist, just update data
+        updateGeofenceData(map, metricsGeoJSON);
+    } else {
+        // Initial load
+        addGeofenceLayers(map, metricsGeoJSON);
+    }
 }

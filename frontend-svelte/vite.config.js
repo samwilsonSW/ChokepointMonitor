@@ -19,6 +19,10 @@ export default defineConfig({
       '/chokepoint-metrics': {
         target: 'http://localhost:8000',
         changeOrigin: true,
+      },
+      '/chokepoint-regions': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
       }
     }
   }

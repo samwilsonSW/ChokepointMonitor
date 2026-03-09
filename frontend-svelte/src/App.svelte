@@ -8,9 +8,9 @@
 
   import maplibregl from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
-  import { conflictStore, sliderTicks, dateRangeLabel, sliderThumbLabels, filteredDataWithRecency } from './stores/conflicts.js';
+  import { conflictStore, sliderTicks, dateRangeLabel, sliderThumbLabels, filteredDataWithRecency, geofenceMetrics } from './stores/conflicts.js';
   import { addConflictsLayer } from './lib/layers/chokepoints.js';
-  import { addGeofenceLayers, updateGeofenceData } from './lib/layers/geofences.js';
+  import { initGeofenceLayers } from './lib/layers/geofences.js';
   import { addConflictHeatmap2RecencyAffectsDensity } from './lib/layers/heatmap.js';
 
   let isDrawerOpen = false;
@@ -71,6 +71,14 @@
     }
   }
 
+  /**
+   * Update geofence layers when metrics change
+   * Reacts to date slider changes for dynamic region stats
+   */
+  $: if (map && $geofenceMetrics.features.length > 0) {
+    initGeofenceLayers(map, $geofenceMetrics);
+  }
+
   onMount(async () => {
     map = new maplibregl.Map({
       container: mapContainer,
@@ -80,20 +88,18 @@
     });
 
     map.on('load', async () => {
-      // Phase 1: Load YTD data
-      const { geoJson: ytdGeoJson, metrics: ytdMetrics } = await conflictStore.loadYTD();
-      
+      // Phase 1: Load YTD data and region definitions
+      const { geoJson: ytdGeoJson } = await conflictStore.loadYTD();
+
       // Render initial layers
       const layerResult = await addConflictsLayer(map, ytdGeoJson, openConflictDrawer);
       clearMapHighlight = layerResult?.clearMapHighlight || null;
-      await addGeofenceLayers(map, ytdMetrics);
       await addConflictHeatmap2RecencyAffectsDensity(map, ytdGeoJson);
+      // Geofences initialize via reactive $geofenceMetrics once data loads
 
       // Phase 2: Background load full history
-      const { metrics: fullMetrics } = await conflictStore.loadFullHistory();
-      
-      // Update geofences with full metrics
-      updateGeofenceData(map, fullMetrics);
+      await conflictStore.loadFullHistory();
+      // Geofences auto-update via reactive $geofenceMetrics
     });
   });
 </script>
