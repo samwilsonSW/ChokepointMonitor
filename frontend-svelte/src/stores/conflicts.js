@@ -246,3 +246,41 @@ export const sliderThumbLabels = derived(conflictStore, $store => {
 
   return [formatDateMMDDYYYY(sliderValue[0]), formatDateMMDDYYYY(sliderValue[1])];
 });
+
+/**
+ * Compute recency values (0.0-1.0) for events relative to current slider range
+ * Events at slider start = 0.0, events at slider end = 1.0
+ */
+function computeRecencyForSlider(events, sliderStart, sliderEnd) {
+  if (!events.length || sliderStart >= sliderEnd) {
+    return events.map(e => ({ ...e, properties: { ...e.properties, recency: 0.5 } }));
+  }
+
+  return events.map(event => {
+    const eventTime = new Date(event.properties.week).getTime();
+    // Clamp to slider range
+    const clampedTime = Math.max(sliderStart, Math.min(eventTime, sliderEnd));
+    const recency = (clampedTime - sliderStart) / (sliderEnd - sliderStart);
+    return {
+      ...event,
+      properties: {
+        ...event.properties,
+        recency: Math.max(0.0, Math.min(1.0, recency))
+      }
+    };
+  });
+}
+
+/**
+ * Derived store: filtered data with recency computed relative to current slider range
+ * This ensures heatmap weighting is consistent regardless of full dataset size
+ */
+export const filteredDataWithRecency = derived(conflictStore, $store => {
+  const { filteredData, sliderValue, loadState } = $store;
+
+  if (loadState === 'idle' || loadState === 'ytd-loading' || !filteredData.length) {
+    return [];
+  }
+
+  return computeRecencyForSlider(filteredData, sliderValue[0], sliderValue[1]);
+});

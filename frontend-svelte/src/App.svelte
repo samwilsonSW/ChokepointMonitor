@@ -8,7 +8,7 @@
 
   import maplibregl from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
-  import { conflictStore, sliderTicks, dateRangeLabel, sliderThumbLabels } from './stores/conflicts.js';
+  import { conflictStore, sliderTicks, dateRangeLabel, sliderThumbLabels, filteredDataWithRecency } from './stores/conflicts.js';
   import { addConflictsLayer } from './lib/layers/chokepoints.js';
   import { addGeofenceLayers, updateGeofenceData } from './lib/layers/geofences.js';
   import { addConflictHeatmap2RecencyAffectsDensity } from './lib/layers/heatmap.js';
@@ -55,14 +55,14 @@
 
   /**
    * Update map sources when filtered data changes
-   * This runs reactively whenever the store's filteredData updates
+   * Uses filteredDataWithRecency for consistent heatmap weighting relative to slider
    */
-  $: if (map && $conflictStore.filteredData.length >= 0) {
+  $: if (map && $filteredDataWithRecency.length >= 0) {
     const geojson = {
       type: 'FeatureCollection',
-      features: $conflictStore.filteredData
+      features: $filteredDataWithRecency
     };
-    
+
     if (map.getSource('conflict-events')) {
       map.getSource('conflict-events').setData(geojson);
     }
