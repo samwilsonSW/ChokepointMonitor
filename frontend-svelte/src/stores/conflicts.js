@@ -1,5 +1,5 @@
 import { writable, derived } from 'svelte/store';
-import { getConflictGeoJSON, getChokepointMetrics } from '../lib/api.js';
+import { getConflictGeoJSON, getChokepointRegions } from '../lib/api.js';
 
 /**
  * Conflict Data Store
@@ -18,19 +18,22 @@ function createConflictStore() {
   const { subscribe, set, update } = writable({
     // Raw data
     allData: [],
-    
+
     // Filtered data for display
     filteredData: [],
-    
+
+    // Chokepoint region definitions (polygons, centers)
+    regions: [],
+
     // Loading state: 'idle' | 'ytd-loading' | 'ytd-ready' | 'full-loading' | 'complete'
     loadState: 'idle',
-    
+
     // Date range from API
     dataRange: {
       min: null,  // earliest date in dataset
       max: null   // latest date (from meta.data_through)
     },
-    
+
     // Current slider selection [startTimestamp, endTimestamp]
     sliderValue: [0, 0]
   });
@@ -44,24 +47,25 @@ function createConflictStore() {
      */
     async loadYTD() {
       update(s => ({ ...s, loadState: 'ytd-loading' }));
-      
+
       const now = new Date();
       const ytdStart = new Date(now.getFullYear(), 0, 1);
       const startStr = ytdStart.toISOString().split('T')[0];
-      
+
       try {
-        const [geoJson, metrics] = await Promise.all([
+        const [geoJson, regions] = await Promise.all([
           getConflictGeoJSON(startStr),
-          getChokepointMetrics(startStr)
+          getChokepointRegions()
         ]);
 
         if (geoJson?.features) {
           const maxDate = geoJson.meta?.data_through || startStr;
-          
+
           update(s => ({
             ...s,
             allData: geoJson.features,
             filteredData: geoJson.features,
+            regions: regions?.features || [],
             loadState: 'ytd-ready',
             dataRange: {
               min: ytdStart.getTime(),
@@ -69,8 +73,8 @@ function createConflictStore() {
             },
             sliderValue: [ytdStart.getTime(), new Date(maxDate).getTime()]
           }));
-          
-          return { geoJson, metrics };
+
+          return { geoJson, regions };
         }
       } catch (error) {
         console.error('YTD load error:', error);
@@ -85,35 +89,32 @@ function createConflictStore() {
      */
     async loadFullHistory() {
       update(s => ({ ...s, loadState: 'full-loading' }));
-      
+
       const now = new Date();
       const threeYearStart = new Date(now.getFullYear() - 3, 0, 1);
       const startStr = threeYearStart.toISOString().split('T')[0];
-      
+
       try {
-        const [geoJson, metrics] = await Promise.all([
-          getConflictGeoJSON(startStr),
-          getChokepointMetrics(startStr)
-        ]);
+        const geoJson = await getConflictGeoJSON(startStr);
 
         if (geoJson?.features) {
           const maxDate = geoJson.meta?.data_through || new Date().toISOString();
-          
+
           update(s => {
             // Keep current slider position if valid, otherwise expand to full range
             const newMin = threeYearStart.getTime();
             const newMax = new Date(maxDate).getTime();
-            
+
             let sliderValue = s.sliderValue;
             if (sliderValue[0] < newMin) sliderValue[0] = newMin;
             if (sliderValue[1] > newMax) sliderValue[1] = newMax;
-            
+
             // Re-filter with new data + current slider
             const filtered = geoJson.features.filter(event => {
               const eventTime = new Date(event.properties.week).getTime();
               return eventTime >= sliderValue[0] && eventTime <= sliderValue[1];
             });
-            
+
             return {
               ...s,
               allData: geoJson.features,
@@ -123,8 +124,8 @@ function createConflictStore() {
               sliderValue
             };
           });
-          
-          return { geoJson, metrics };
+
+          return { geoJson };
         }
       } catch (error) {
         console.error('Full history load error:', error);
@@ -283,4 +284,129 @@ export const filteredDataWithRecency = derived(conflictStore, $store => {
   }
 
   return computeRecencyForSlider(filteredData, sliderValue[0], sliderValue[1]);
+});
+
+/**
+ * Point-in-polygon test using ray casting algorithm
+ * Supports GeoJSON polygon format (array of [lon, lat] coordinates)
+ */
+export function pointInPolygon(lon, lat, polygon) {
+  // polygon is expected as [[lon, lat], [lon, lat], ...]
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i][0], yi = polygon[i][1];
+    const xj = polygon[j][0], yj = polygon[j][1];
+
+    if (((yi > lat) !== (yj > lat)) &&
+        (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi)) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+/**
+ * Calculate risk level based on event metrics
+ */
+function calculateRiskLevel(eventCount, fatalities, lastEventDate) {
+  if (eventCount === 0) return 'none';
+
+  // Check recency
+  if (lastEventDate) {
+    const lastDate = new Date(lastEventDate);
+    const daysSince = (Date.now() - lastDate.getTime()) / (1000 * 60 * 60 * 24);
+
+    if (daysSince <= 7) return 'high';
+    if (daysSince <= 30 && eventCount >= 5) return 'medium';
+  }
+
+  // Check volume thresholds
+  if (eventCount > 20 || fatalities > 50) return 'high';
+  if (eventCount >= 5 || fatalities >= 10) return 'medium';
+
+  return 'low';
+}
+
+/**
+ * Compute geofence metrics from filtered conflict events
+ * Calculates event counts, fatalities, and risk levels for each region
+ */
+function computeGeofenceMetrics(regions, events) {
+  if (!regions.length || !events.length) {
+    return {
+      type: 'FeatureCollection',
+      features: regions.map(r => ({
+        ...r,
+        properties: {
+          ...r.properties,
+          event_count: 0,
+          total_events: 0,
+          total_fatalities: 0,
+          last_event_date: null,
+          risk_level: 'none'
+        }
+      }))
+    };
+  }
+
+  const features = regions.map(region => {
+    const props = region.properties;
+    const polygon = region.geometry?.coordinates?.[0] || [];
+
+    // Find events within this region's polygon
+    const containedEvents = events.filter(e => {
+      const lon = e.geometry?.coordinates?.[0];
+      const lat = e.geometry?.coordinates?.[1];
+      if (lon == null || lat == null) return false;
+      return pointInPolygon(lon, lat, polygon);
+    });
+
+    const eventCount = containedEvents.length;
+    const totalEvents = containedEvents.reduce((sum, e) =>
+      sum + (e.properties?.no_of_events || 0), 0);
+    const totalFatalities = containedEvents.reduce((sum, e) =>
+      sum + (e.properties?.fatalities || 0), 0);
+
+    const lastEventDate = containedEvents.length > 0
+      ? containedEvents
+          .map(e => e.properties?.week)
+          .filter(Boolean)
+          .sort()
+          .pop()
+      : null;
+
+    const riskLevel = calculateRiskLevel(eventCount, totalFatalities, lastEventDate);
+
+    return {
+      type: 'Feature',
+      geometry: region.geometry,
+      properties: {
+        name: props.name,
+        display_name: props.display_name,
+        center_lat: props.center_lat,
+        center_lon: props.center_lon,
+        event_count: eventCount,
+        total_events: totalEvents,
+        total_fatalities: totalFatalities,
+        last_event_date: lastEventDate,
+        risk_level: riskLevel
+      }
+    };
+  });
+
+  return { type: 'FeatureCollection', features };
+}
+
+/**
+ * Derived store: geofence metrics calculated from filtered events
+ * Updates dynamically when date slider changes
+ */
+export const geofenceMetrics = derived(conflictStore, $store => {
+  const { regions, filteredData, loadState } = $store;
+
+  if (loadState === 'idle' || loadState === 'ytd-loading') {
+    return { type: 'FeatureCollection', features: [] };
+  }
+
+  return computeGeofenceMetrics(regions, filteredData);
 });

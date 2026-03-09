@@ -9,6 +9,20 @@ from typing import List, Dict, Any
 from ..supabase_client import _get_client
 
 
+def fetch_chokepoint_regions() -> List[Dict[str, Any]]:
+    """
+    Fetch chokepoint region definitions (polygons, centers) without metrics.
+    Used for client-side metric calculation.
+    """
+    try:
+        client = _get_client()
+        regions_response = client.table("chokepoint_regions").select("*").execute()
+        return regions_response.data or []
+    except Exception as e:
+        print(f"Error fetching chokepoint regions: {e}")
+        raise
+
+
 def fetch_chokepoint_metrics(start_date: str = None) -> List[Dict[str, Any]]:
     """
     Calculate conflict metrics for each chokepoint region.

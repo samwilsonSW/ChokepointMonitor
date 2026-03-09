@@ -8,13 +8,14 @@
 
   import maplibregl from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
-  import { conflictStore, sliderTicks, dateRangeLabel, sliderThumbLabels, filteredDataWithRecency } from './stores/conflicts.js';
+  import { conflictStore, sliderTicks, dateRangeLabel, sliderThumbLabels, filteredDataWithRecency, geofenceMetrics, pointInPolygon } from './stores/conflicts.js';
   import { addConflictsLayer } from './lib/layers/chokepoints.js';
-  import { addGeofenceLayers, updateGeofenceData } from './lib/layers/geofences.js';
+  import { initGeofenceLayers } from './lib/layers/geofences.js';
   import { addConflictHeatmap2RecencyAffectsDensity } from './lib/layers/heatmap.js';
 
   let isDrawerOpen = false;
   let selectedEvents = [];
+  let selectedRegionName = null;  // Set when opened from geofence click
   let mapContainer;
   let map;
   let clearMapHighlight = null;
@@ -25,19 +26,22 @@
   // Sync local slider with store
   $: localSliderValue = $conflictStore.sliderValue;
 
-  function openConflictDrawer(events) {
+  function openConflictDrawer(events, regionName = null) {
     selectedEvents = events;
+    selectedRegionName = regionName;
     isDrawerOpen = true;
   }
 
   $: if (!isDrawerOpen && typeof clearMapHighlight === 'function') {
     clearMapHighlight();
+    selectedRegionName = null;  // Reset when drawer closes
   }
 
   function handleOpenChange(details) {
     isDrawerOpen = details.open;
-    if (details.open === false && clearMapHighlight) {
-      clearMapHighlight();
+    if (details.open === false) {
+      if (clearMapHighlight) clearMapHighlight();
+      selectedRegionName = null;
     }
   }
 
@@ -71,6 +75,34 @@
     }
   }
 
+  /**
+   * Update geofence layers when metrics change
+   * Reacts to date slider changes for dynamic region stats
+   */
+  $: if (map && $geofenceMetrics.features.length > 0) {
+    initGeofenceLayers(map, $geofenceMetrics, handleGeofenceClick);
+  }
+
+  /**
+   * Handle geofence click - open drawer with events inside polygon
+   */
+  function handleGeofenceClick(geometry, properties) {
+    const polygon = geometry?.coordinates?.[0];
+    if (!polygon || !$filteredDataWithRecency.length) return;
+
+    // Filter events to those inside this geofence polygon
+    const eventsInGeofence = $filteredDataWithRecency.filter(event => {
+      const lon = event.geometry?.coordinates?.[0];
+      const lat = event.geometry?.coordinates?.[1];
+      if (lon == null || lat == null) return false;
+      return pointInPolygon(lon, lat, polygon);
+    });
+
+    if (eventsInGeofence.length > 0) {
+      openConflictDrawer(eventsInGeofence, properties.display_name);
+    }
+  }
+
   onMount(async () => {
     map = new maplibregl.Map({
       container: mapContainer,
@@ -80,20 +112,18 @@
     });
 
     map.on('load', async () => {
-      // Phase 1: Load YTD data
-      const { geoJson: ytdGeoJson, metrics: ytdMetrics } = await conflictStore.loadYTD();
-      
+      // Phase 1: Load YTD data and region definitions
+      const { geoJson: ytdGeoJson } = await conflictStore.loadYTD();
+
       // Render initial layers
       const layerResult = await addConflictsLayer(map, ytdGeoJson, openConflictDrawer);
       clearMapHighlight = layerResult?.clearMapHighlight || null;
-      await addGeofenceLayers(map, ytdMetrics);
       await addConflictHeatmap2RecencyAffectsDensity(map, ytdGeoJson);
+      // Geofences initialize via reactive $geofenceMetrics once data loads
 
       // Phase 2: Background load full history
-      const { metrics: fullMetrics } = await conflictStore.loadFullHistory();
-      
-      // Update geofences with full metrics
-      updateGeofenceData(map, fullMetrics);
+      await conflictStore.loadFullHistory();
+      // Geofences auto-update via reactive $geofenceMetrics
     });
   });
 </script>
@@ -184,7 +214,7 @@
       </header>
 
       <div class="flex-1 overflow-y-auto p-4">
-        <ConflictPopup events={selectedEvents} />
+        <ConflictPopup events={selectedEvents} regionName={selectedRegionName} />
       </div>
     </Dialog.Content>
   </Portal>

@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from datetime import date
 from .fetch_conflict_events import fetch_conflict_events, conflicts_to_geojson
-from .chokepoint_metrics import fetch_chokepoint_metrics
+from .chokepoint_metrics import fetch_chokepoint_metrics, fetch_chokepoint_regions
 
 app = FastAPI(title="Chokepoint Monitor API")
 
@@ -32,6 +32,35 @@ async def get_conflicts(start_date: str = None):
     )
     geojson = conflicts_to_geojson(rows)
     return geojson
+
+
+@app.get("/chokepoint-regions")
+async def get_chokepoint_regions():
+    """
+    Get chokepoint region definitions (polygons, centers).
+    Used for client-side metric calculation with dynamic date filtering.
+    """
+    regions = await asyncio.get_event_loop().run_in_executor(
+        _executor,
+        fetch_chokepoint_regions
+    )
+    return {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "geometry": r["geojson_polygon"],
+                "properties": {
+                    "name": r["name"],
+                    "display_name": r["display_name"],
+                    "center_lat": r["center_lat"],
+                    "center_lon": r["center_lon"],
+                    "bbox": r["bounding_box"]
+                }
+            }
+            for r in regions
+        ]
+    }
 
 
 @app.get("/chokepoint-metrics")

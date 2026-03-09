@@ -2,7 +2,7 @@ import maplibregl from 'maplibre-gl';
 import GeofencePopup from '../components/GeofencePopup.svelte';
 import { mountPopupComponent, unmountPopupComponent } from '../utils/popupMount.js';
 
-export async function addGeofenceLayers(map, metricsGeoJSON) {
+export async function addGeofenceLayers(map, metricsGeoJSON, onGeofenceClick = null) {
     if (!metricsGeoJSON || !metricsGeoJSON.features) {
         console.error("Invalid metrics data for geofences");
         return;
@@ -54,6 +54,14 @@ export async function addGeofenceLayers(map, metricsGeoJSON) {
     map.on('click', 'geofence-fill', (e) => {
         const feature = e.features[0];
         const props = feature.properties;
+
+        // If callback provided, open drawer with events in this geofence
+        if (onGeofenceClick) {
+            onGeofenceClick(feature.geometry, props);
+            return;
+        }
+
+        // Fallback: show popup
         const coordinates = [props.center_lon, props.center_lat];
 
         // Clean up previous popup
@@ -71,10 +79,10 @@ export async function addGeofenceLayers(map, metricsGeoJSON) {
             riskLevel: props.risk_level,
             lastEventDate: props.last_event_date
         });
-        
+
         currentPopupContainer = popupContainer;
 
-        currentPopup = new maplibregl.Popup({ 
+        currentPopup = new maplibregl.Popup({
             maxWidth: '280px',
             closeOnClick: false
         })
@@ -96,10 +104,10 @@ export async function addGeofenceLayers(map, metricsGeoJSON) {
         map.getCanvas().style.cursor = '';
     });
 
-    addRiskBadges(map, metricsGeoJSON);
+    addRiskBadges(map, metricsGeoJSON, onGeofenceClick);
 }
 
-function addRiskBadges(map, metricsGeoJSON) {
+function addRiskBadges(map, metricsGeoJSON, onGeofenceClick = null) {
     const existingBadges = document.querySelectorAll('.chokepoint-risk-badge');
     existingBadges.forEach(badge => badge.remove());
 
@@ -129,9 +137,18 @@ function addRiskBadges(map, metricsGeoJSON) {
             <span style="margin-left: 4px; opacity: 0.8;">${props.event_count}</span>
         `;
 
-        el.addEventListener('click', () => {
+        el.addEventListener('click', (evt) => {
+            evt.stopPropagation();
+
+            // If callback provided, open drawer with events in this geofence
+            if (onGeofenceClick) {
+                onGeofenceClick(feature.geometry, props);
+                return;
+            }
+
+            // Fallback: show popup
             const coordinates = [props.center_lon, props.center_lat];
-            
+
             // Clean up previous popup
             if (currentPopup) {
                 if (currentPopupContainer) {
@@ -139,7 +156,7 @@ function addRiskBadges(map, metricsGeoJSON) {
                 }
                 currentPopup.remove();
             }
-            
+
             const popupContainer = mountPopupComponent(GeofencePopup, {
                 name: props.display_name,
                 eventCount: props.event_count,
@@ -147,10 +164,10 @@ function addRiskBadges(map, metricsGeoJSON) {
                 riskLevel: props.risk_level,
                 lastEventDate: props.last_event_date
             });
-            
+
             currentPopupContainer = popupContainer;
 
-            currentPopup = new maplibregl.Popup({ 
+            currentPopup = new maplibregl.Popup({
                 maxWidth: '280px',
                 closeOnClick: false
             })
@@ -170,11 +187,25 @@ function addRiskBadges(map, metricsGeoJSON) {
     });
 }
 
-export function updateGeofenceData(map, newMetricsGeoJSON) {
+export function updateGeofenceData(map, newMetricsGeoJSON, onGeofenceClick = null) {
     const source = map.getSource('chokepoint-geofences');
     if (source) {
         source.setData(newMetricsGeoJSON);
+        addRiskBadges(map, newMetricsGeoJSON, onGeofenceClick);
     }
-    
-    addRiskBadges(map, newMetricsGeoJSON);
+}
+
+/**
+ * Initialize geofence layers if they don't exist, or update if they do
+ * Safe to call multiple times - handles both initial load and updates
+ */
+export function initGeofenceLayers(map, metricsGeoJSON, onGeofenceClick = null) {
+    const source = map.getSource('chokepoint-geofences');
+    if (source) {
+        // Layers already exist, just update data
+        updateGeofenceData(map, metricsGeoJSON, onGeofenceClick);
+    } else {
+        // Initial load
+        addGeofenceLayers(map, metricsGeoJSON, onGeofenceClick);
+    }
 }

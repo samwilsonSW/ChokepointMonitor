@@ -39,3 +39,20 @@ export async function getChokepointMetrics(startDate = null) {
         return null;
     }
 }
+
+export async function getChokepointRegions() {
+    const url = `${API_BASE_URL}/chokepoint-regions`;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log(`Loaded ${data.features.length} chokepoint region definitions`);
+        return data;
+    } catch (error) {
+        console.error("Could not fetch chokepoint regions:", error);
+        return null;
+    }
+}
