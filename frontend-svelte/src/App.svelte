@@ -8,7 +8,7 @@
 
   import maplibregl from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
-  import { conflictStore, sliderTicks, dateRangeLabel, sliderThumbLabels, filteredDataWithRecency, geofenceMetrics } from './stores/conflicts.js';
+  import { conflictStore, sliderTicks, dateRangeLabel, sliderThumbLabels, filteredDataWithRecency, geofenceMetrics, pointInPolygon } from './stores/conflicts.js';
   import { addConflictsLayer } from './lib/layers/chokepoints.js';
   import { initGeofenceLayers } from './lib/layers/geofences.js';
   import { addConflictHeatmap2RecencyAffectsDensity } from './lib/layers/heatmap.js';
@@ -76,7 +76,27 @@
    * Reacts to date slider changes for dynamic region stats
    */
   $: if (map && $geofenceMetrics.features.length > 0) {
-    initGeofenceLayers(map, $geofenceMetrics);
+    initGeofenceLayers(map, $geofenceMetrics, handleGeofenceClick);
+  }
+
+  /**
+   * Handle geofence click - open drawer with events inside polygon
+   */
+  function handleGeofenceClick(geometry, properties) {
+    const polygon = geometry?.coordinates?.[0];
+    if (!polygon || !$filteredDataWithRecency.length) return;
+
+    // Filter events to those inside this geofence polygon
+    const eventsInGeofence = $filteredDataWithRecency.filter(event => {
+      const lon = event.geometry?.coordinates?.[0];
+      const lat = event.geometry?.coordinates?.[1];
+      if (lon == null || lat == null) return false;
+      return pointInPolygon(lon, lat, polygon);
+    });
+
+    if (eventsInGeofence.length > 0) {
+      openConflictDrawer(eventsInGeofence);
+    }
   }
 
   onMount(async () => {

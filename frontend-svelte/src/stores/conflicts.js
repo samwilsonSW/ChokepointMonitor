@@ -290,7 +290,7 @@ export const filteredDataWithRecency = derived(conflictStore, $store => {
  * Point-in-polygon test using ray casting algorithm
  * Supports GeoJSON polygon format (array of [lon, lat] coordinates)
  */
-function pointInPolygon(lon, lat, polygon) {
+export function pointInPolygon(lon, lat, polygon) {
   // polygon is expected as [[lon, lat], [lon, lat], ...]
   let inside = false;
   for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
