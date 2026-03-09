@@ -8,7 +8,7 @@
 
   import maplibregl from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
-  import { conflictStore, sliderTicks, dateRangeLabel } from './stores/conflicts.js';
+  import { conflictStore, sliderTicks, dateRangeLabel, sliderThumbLabels, filteredDataWithRecency } from './stores/conflicts.js';
   import { addConflictsLayer } from './lib/layers/chokepoints.js';
   import { addGeofenceLayers, updateGeofenceData } from './lib/layers/geofences.js';
   import { addConflictHeatmap2RecencyAffectsDensity } from './lib/layers/heatmap.js';
@@ -55,14 +55,14 @@
 
   /**
    * Update map sources when filtered data changes
-   * This runs reactively whenever the store's filteredData updates
+   * Uses filteredDataWithRecency for consistent heatmap weighting relative to slider
    */
-  $: if (map && $conflictStore.filteredData.length >= 0) {
+  $: if (map && $filteredDataWithRecency.length >= 0) {
     const geojson = {
       type: 'FeatureCollection',
-      features: $conflictStore.filteredData
+      features: $filteredDataWithRecency
     };
-    
+
     if (map.getSource('conflict-events')) {
       map.getSource('conflict-events').setData(geojson);
     }
@@ -110,12 +110,12 @@
   </AppBar>
 
   <!-- Full-width Date Range Slider -->
-  <div class="slider-container bg-surface-800 border-b border-surface-700 px-4 py-2">
+  <div class="slider-container bg-surface-800 border-b border-surface-700 px-4 py-2 pb-6">
     <div class="flex items-center gap-4">
       <span class="text-sm text-surface-300 whitespace-nowrap">Date Range:</span>
       {#if $sliderTicks.length > 0}
         <div class="flex-1 min-w-0">
-          <!-- 
+          <!--
             Slider from @skeletonlabs/skeleton-svelte
             Docs: https://www.skeleton.dev/docs/svelte/framework-components/slider
             Uses compound component pattern for range selection
@@ -131,11 +131,19 @@
               <Slider.Track class="bg-surface-600 h-2 rounded-full">
                 <Slider.Range class="bg-primary-500 h-2 rounded-full" />
               </Slider.Track>
-              <Slider.Thumb index={0} class="w-4 h-4 bg-primary-500 rounded-full border-2 border-surface-900">
+              <!-- Thumb 0 with floating label -->
+              <Slider.Thumb index={0} class="thumb-with-label w-4 h-4 bg-primary-500 rounded-full border-2 border-surface-900 relative group">
                 <Slider.HiddenInput />
+                <span class="thumb-label absolute -top-7 left-1/2 -translate-x-1/2 bg-surface-700 text-surface-100 text-xs px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                  {$sliderThumbLabels[0]}
+                </span>
               </Slider.Thumb>
-              <Slider.Thumb index={1} class="w-4 h-4 bg-primary-500 rounded-full border-2 border-surface-900">
+              <!-- Thumb 1 with floating label -->
+              <Slider.Thumb index={1} class="thumb-with-label w-4 h-4 bg-primary-500 rounded-full border-2 border-surface-900 relative group">
                 <Slider.HiddenInput />
+                <span class="thumb-label absolute -top-7 left-1/2 -translate-x-1/2 bg-surface-700 text-surface-100 text-xs px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                  {$sliderThumbLabels[1]}
+                </span>
               </Slider.Thumb>
             </Slider.Control>
             <Slider.MarkerGroup>
@@ -190,18 +198,31 @@
     height: 100vh;
     overflow: hidden;
   }
-  
+
   .slider-container {
     width: 100%;
     flex-shrink: 0;
   }
-  
+
+  /* Add margin below tick marks for readability */
+  :global([data-part="marker-group"]) {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Always show thumb labels on mobile/touch, hover on desktop */
+  @media (hover: none) {
+    :global(.thumb-label) {
+      opacity: 1 !important;
+    }
+  }
+
   .map-container {
     flex: 1;
     position: relative;
     min-height: 0;
   }
-  
+
   :global(.maplibregl-map) {
     position: absolute;
     top: 0;

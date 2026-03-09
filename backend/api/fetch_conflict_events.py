@@ -86,7 +86,7 @@ def fetch_conflict_events(start_date: Optional[str] = None, chokepoints_only: bo
         if len(rows) < PAGE_SIZE:
             break
 
-    all_rows = compute_recency_for_heatmap(all_rows, start_date_obj)
+    # Recency calculation moved to client-side for dynamic slider-based weighting
     return all_rows
 
 def conflicts_to_geojson(rows):
