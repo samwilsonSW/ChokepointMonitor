@@ -2,8 +2,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from datetime import date
+
+from ..supabase_client import _get_client
 from .fetch_conflict_events import fetch_conflict_events, conflicts_to_geojson
 from .chokepoint_metrics import fetch_chokepoint_metrics, fetch_chokepoint_regions
+from .fetch_weekly_analysis import fetch_weekly_analysis
+
 
 app = FastAPI(title="Chokepoint Monitor API")
 
@@ -98,6 +102,29 @@ async def get_chokepoint_metrics(start_date: str = None):
         ]
     }
 
+@app.get("/weekly-analysis")
+async def get_weekly_analysis(start_week: str = None, end_week: str = None): 
+    """
+    Get weekly aggregated conflict and financial data for correlation analysis.
+    """
+    try:
+        data = await asyncio.get_event_loop().run_in_executor(
+            None, 
+            fetch_weekly_analysis, 
+            ticker,
+            start_week,
+            end_week
+        )
+        
+        return {
+            "data": data,
+            "count": len(data),
+            "start_week": start_week,
+            "end_week": end_week
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
   
 
 # app.mount("/", StaticFiles(directory="frontend-svelte/dist", html=True), name="frontend")

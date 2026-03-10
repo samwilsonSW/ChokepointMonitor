@@ -141,6 +141,7 @@ def conflicts_to_geojson(rows):
 
 def compute_recency_for_heatmap(data, start_date):
     """
+    ---MOVED TO CLIENT SIDE---
     Adds a `recency` field (0.0–1.0) to each row given.
     `row["week"]` is expected to be an ISO date string (YYYY-MM-DD).
     """
