@@ -8,11 +8,11 @@ import { getWeeklyAnalysis } from '../lib/api.js';
  * Fetches all data on init (~520 rows currently, max ~3KB), filters client-side.
  *
  * Usage:
- *   import { financialStore, filteredFinancialData } from './stores/financial.js';
+ *   import { financialStore, createFilteredFinancialData } from './stores/financial.js';
  *
  *   // In component:
  *   financialStore.load(); // Start loading
- *   $filteredFinancialData; // Access filtered data
+ *   $filteredData; // Access filtered data
  */
 
 function createFinancialStore() {
@@ -49,19 +49,32 @@ function createFinancialStore() {
       try {
         const data = await getWeeklyAnalysis();
 
-        if (data?.data) {
-          update(s => ({
-            ...s,
-            allData: data.data,
-            tickers: data.tickers || [],
-            dateRange: {
-              min: data.date_range?.min ? new Date(data.date_range.min).getTime() : null,
-              max: data.date_range?.max ? new Date(data.date_range.max).getTime() : null
-            },
-            loadState: 'ready'
-          }));
-          return data;
+        // Handle null/undefined response or missing data property
+        if (!data || !data.data || !Array.isArray(data.data)) {
+          console.error('Invalid data structure from API:', data);
+          update(s => ({ ...s, loadState: 'error' }));
+          return null;
         }
+
+        // Extract tickers from data if not provided separately
+        let tickers = data.tickers || [];
+        if (!tickers.length && data.data.length > 0) {
+          // Extract unique tickers from the data itself
+          const uniqueTickers = new Set(data.data.map(d => d.ticker).filter(Boolean));
+          tickers = Array.from(uniqueTickers).sort();
+        }
+
+        update(s => ({
+          ...s,
+          allData: data.data,
+          tickers: tickers,
+          dateRange: {
+            min: data.date_range?.min ? new Date(data.date_range.min).getTime() : null,
+            max: data.date_range?.max ? new Date(data.date_range.max).getTime() : null
+          },
+          loadState: 'ready'
+        }));
+        return data;
       } catch (error) {
         console.error('Financial data load error:', error);
         update(s => ({ ...s, loadState: 'error' }));
@@ -105,12 +118,29 @@ export function createFilteredFinancialData(conflictStore) {
     const { allData, selectedTicker, selectedRegion, loadState } = $financial;
     const { sliderValue, loadState: conflictLoadState } = $conflict;
 
-    // Financial data must be ready and conflict store must have loaded
-    if (loadState !== 'ready' || !['ytd-ready', 'full-loading', 'complete'].includes(conflictLoadState)) {
+    // Financial data must be ready
+    if (loadState !== 'ready') {
+      return [];
+    }
+
+    // Conflict store must have loaded enough to have slider values
+    // Valid states: 'ytd-ready', 'full-loading', 'complete'
+    const validConflictStates = ['ytd-ready', 'full-loading', 'complete'];
+    if (!validConflictStates.includes(conflictLoadState)) {
+      return [];
+    }
+
+    // Must have slider values
+    if (!sliderValue || !Array.isArray(sliderValue) || sliderValue.length !== 2) {
       return [];
     }
 
     const [startTime, endTime] = sliderValue;
+
+    // Validate time range
+    if (typeof startTime !== 'number' || typeof endTime !== 'number' || startTime >= endTime) {
+      return [];
+    }
 
     return allData.filter(d => {
       // Filter by ticker
@@ -118,6 +148,7 @@ export function createFilteredFinancialData(conflictStore) {
 
       // Filter by date range
       const weekTime = new Date(d.acled_week).getTime();
+      if (isNaN(weekTime)) return false;
       if (weekTime < startTime || weekTime > endTime) return false;
 
       return true;
@@ -142,22 +173,55 @@ export function createFilteredFinancialData(conflictStore) {
 
 /**
  * Calculate Pearson correlation coefficient between two arrays
+ * Handles edge cases: mismatched lengths, empty arrays, zero variance, NaN/Infinity values
  */
 export function pearsonCorrelation(x, y) {
+  // Validate inputs
+  if (!Array.isArray(x) || !Array.isArray(y)) return 0;
   const n = x.length;
   if (n !== y.length || n === 0) return 0;
 
-  const sumX = x.reduce((a, b) => a + b, 0);
-  const sumY = y.reduce((a, b) => a + b, 0);
-  const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
-  const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0);
-  const sumY2 = y.reduce((sum, yi) => sum + yi * yi, 0);
+  // Filter out invalid values (NaN, Infinity, null, undefined)
+  const validPairs = [];
+  for (let i = 0; i < n; i++) {
+    const xi = x[i];
+    const yi = y[i];
+    if (
+      typeof xi === 'number' && isFinite(xi) &&
+      typeof yi === 'number' && isFinite(yi)
+    ) {
+      validPairs.push([xi, yi]);
+    }
+  }
 
-  const numerator = n * sumXY - sumX * sumY;
-  const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+  const m = validPairs.length;
+  if (m < 2) return 0; // Need at least 2 points for correlation
 
+  let sumX = 0, sumY = 0;
+  for (const [xi, yi] of validPairs) {
+    sumX += xi;
+    sumY += yi;
+  }
+
+  const meanX = sumX / m;
+  const meanY = sumY / m;
+
+  let sumXY = 0, sumX2 = 0, sumY2 = 0;
+  for (const [xi, yi] of validPairs) {
+    const dx = xi - meanX;
+    const dy = yi - meanY;
+    sumXY += dx * dy;
+    sumX2 += dx * dx;
+    sumY2 += dy * dy;
+  }
+
+  // Zero variance check (all values identical)
+  if (sumX2 === 0 || sumY2 === 0) return 0;
+
+  const denominator = Math.sqrt(sumX2 * sumY2);
   if (denominator === 0) return 0;
-  return numerator / denominator;
+
+  return sumXY / denominator;
 }
 
 /**
@@ -165,7 +229,7 @@ export function pearsonCorrelation(x, y) {
  */
 export function createCorrelationStats(filteredDataStore) {
   return derived(filteredDataStore, $data => {
-    if ($data.length < 2) {
+    if (!$data || $data.length < 2) {
       return { r: 0, n: 0, interpretation: 'Insufficient data' };
     }
 
@@ -173,6 +237,11 @@ export function createCorrelationStats(filteredDataStore) {
     const events = $data.map(d => d.filtered_events);
 
     const r = pearsonCorrelation(prices, events);
+
+    // Handle NaN result
+    if (isNaN(r) || !isFinite(r)) {
+      return { r: 0, n: $data.length, interpretation: 'Unable to calculate' };
+    }
 
     let interpretation;
     const absR = Math.abs(r);
@@ -193,7 +262,7 @@ export function createCorrelationStats(filteredDataStore) {
  */
 export function createChartData(filteredDataStore) {
   return derived(filteredDataStore, $data => {
-    if (!$data.length) return null;
+    if (!$data || !$data.length) return null;
 
     return $data.map(d => ({
       date: d.acled_week,
