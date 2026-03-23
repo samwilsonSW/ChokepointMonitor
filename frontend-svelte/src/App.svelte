@@ -205,12 +205,12 @@
   </div>
 
   <!-- 50/50 Split Layout: Map + Financial Panel -->
-  <div class="flex flex-1 min-h-0">
+  <div class="flex flex-1 min-h-0 relative">
     <!-- Map: 50% -->
-    <div class="w-1/2 h-full relative" bind:this={mapContainer}></div>
+    <div class="w-1/2 h-full relative z-0" bind:this={mapContainer}></div>
 
     <!-- Financial Panel: 50% -->
-    <div class="w-1/2 h-full">
+    <div class="w-1/2 h-full relative z-10">
       <FinancialPanel
         chartData={$chartData || []}
         ticker={$financialStore.selectedTicker}
