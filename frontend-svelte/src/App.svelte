@@ -16,6 +16,7 @@
   import { addConflictHeatmap2RecencyAffectsDensity } from './lib/layers/heatmap.js';
 
   let isDrawerOpen = false;
+  let isFinancialDrawerOpen = false;
   let selectedEvents = [];
   let selectedRegionName = null;  // Set when opened from geofence click
   let mapContainer;
@@ -50,6 +51,10 @@
       if (clearMapHighlight) clearMapHighlight();
       selectedRegionName = null;
     }
+  }
+
+  function handleFinancialOpenChange(details) {
+    isFinancialDrawerOpen = details.open;
   }
 
   /**
@@ -204,22 +209,20 @@
     </div>
   </div>
 
-  <!-- 50/50 Split Layout: Map + Financial Panel -->
-  <div class="flex flex-1 min-h-0 relative">
-    <!-- Map: 50% -->
-    <div class="w-1/2 h-full relative z-0" bind:this={mapContainer}></div>
-
-    <!-- Financial Panel: 50% -->
-    <div class="w-1/2 h-full relative z-10">
-      <FinancialPanel
-        chartData={$chartData || []}
-        ticker={$financialStore.selectedTicker}
-        correlationStats={$correlationStats}
-      />
-    </div>
+  <div class="map-container relative" bind:this={mapContainer}>
+    <!-- Floating Insights Button -->
+    {#if $financialStore.loadState === 'ready'}
+      <button 
+        class="absolute bottom-6 left-6 z-50 px-4 py-2 bg-primary-500 text-white rounded-lg shadow-lg hover:bg-primary-600 transition-colors"
+        on:click={() => isFinancialDrawerOpen = true}
+      >
+        Insights
+      </button>
+    {/if}
   </div>
 </div>
 
+<!-- Conflict Events Drawer -->
 <Dialog open={isDrawerOpen} onOpenChange={handleOpenChange}>
   <Dialog.Trigger />
 
@@ -238,6 +241,34 @@
 
       <div class="flex-1 overflow-y-auto p-4">
         <ConflictPopup events={selectedEvents} regionName={selectedRegionName} />
+      </div>
+    </Dialog.Content>
+  </Portal>
+</Dialog>
+
+<!-- Financial Insights Drawer -->
+<Dialog open={isFinancialDrawerOpen} onOpenChange={handleFinancialOpenChange}>
+  <Dialog.Trigger />
+
+  <Portal>
+    <Dialog.Backdrop class="fixed inset-0 z-[9999] bg-black/20" />
+
+    <Dialog.Content 
+      class="fixed inset-y-0 right-0 z-[10000] w-full max-w-[600px] bg-surface-900 border-l border-white/10 shadow-2xl flex flex-col"
+    >
+      <header class="p-4 border-b border-white/10 flex justify-between items-center bg-surface-800">
+        <h2 class="text-xl font-bold text-white">Financial Insights</h2>
+        <Dialog.CloseTrigger class="btn hover:bg-white/10 rounded-full p-2 text-white">
+          ✕
+        </Dialog.CloseTrigger>
+      </header>
+
+      <div class="flex-1 overflow-y-auto p-4">
+        <FinancialPanel
+          chartData={$chartData || []}
+          ticker={$financialStore.selectedTicker}
+          correlationStats={$correlationStats}
+        />
       </div>
     </Dialog.Content>
   </Portal>
@@ -268,6 +299,12 @@
     :global(.thumb-label) {
       opacity: 1 !important;
     }
+  }
+
+  .map-container {
+    flex: 1;
+    position: relative;
+    min-height: 0;
   }
 
   :global(.maplibregl-map) {
