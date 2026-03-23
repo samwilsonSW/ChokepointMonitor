@@ -280,14 +280,15 @@ export function createChartData(filteredDataStore) {
   return derived(filteredDataStore, $data => {
     if (!$data || !$data.length) return null;
 
+    console.log('Chart data - first record fields:', Object.keys($data[0]));
     return $data.map(d => ({
       date: d.acled_week,
       price: d.avg_close,
       priceChange: d.weekly_change_pct,
       volatility: d.range_volatility_pct,
-      redSeaEvents: d.red_sea_events || 0,
-      persianGulfEvents: d.persian_gulf_events || 0,
-      malaccaEvents: d.malacca_events || 0,
+      redSeaEvents: d.red_sea_events ?? d.red_sea_count ?? 0,
+      persianGulfEvents: d.persian_gulf_events ?? d.persian_gulf_count ?? 0,
+      malaccaEvents: d.malacca_events ?? d.malacca_count ?? 0,
       totalEvents: d.filtered_events
     }));
   });

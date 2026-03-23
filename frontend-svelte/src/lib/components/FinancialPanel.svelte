@@ -183,14 +183,16 @@
     yPriceAxis.select('.domain').attr('stroke', '#3b82f6');
     yPriceAxis.selectAll('.tick line').attr('stroke', '#3b82f6');
 
-    // Right Y Axis (Events)
+    // Right Y Axis (Events) - always show, even with 0 events
     const yEventsAxis = g.append('g')
       .attr('transform', `translate(${innerWidth},0)`)
-      .call(axisRight(yEventsScale).ticks(6));
+      .call(axisRight(yEventsScale).ticks(6).tickFormat(d => Math.round(d)));
 
-    yEventsAxis.selectAll('text').attr('fill', 'rgba(255,255,255,0.6)');
-    yEventsAxis.select('.domain').attr('stroke', 'rgba(255,255,255,0.3)');
-    yEventsAxis.selectAll('.tick line').attr('stroke', 'rgba(255,255,255,0.3)');
+    yEventsAxis.selectAll('text')
+      .attr('fill', '#fbbf24')  // Amber-400 for visibility
+      .attr('font-size', '11px');
+    yEventsAxis.select('.domain').attr('stroke', '#fbbf24');
+    yEventsAxis.selectAll('.tick line').attr('stroke', '#fbbf24').attr('opacity', 0.5);
 
     // Axis labels
     g.append('text')

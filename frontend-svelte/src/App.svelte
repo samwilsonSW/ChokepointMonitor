@@ -254,7 +254,7 @@
     <Dialog.Backdrop class="fixed inset-0 z-[9999] bg-black/20" />
 
     <Dialog.Content 
-      class="fixed inset-y-0 right-0 z-[10000] w-full max-w-[600px] bg-surface-900 border-l border-white/10 shadow-2xl flex flex-col"
+      class="fixed inset-y-0 right-0 z-[10000] w-[75vw] max-w-none bg-surface-900 border-l border-white/10 shadow-2xl flex flex-col"
     >
       <header class="p-4 border-b border-white/10 flex justify-between items-center bg-surface-800">
         <h2 class="text-xl font-bold text-white">Financial Insights Pee Pee Poo Poo</h2>
