@@ -68,10 +68,15 @@ function createFinancialStore() {
         }
         console.log('Available tickers:', tickers);
 
+        // Use first available ticker if current selection isn't in the list
+        const currentTicker = tickers.find(t => t === 'USO') || tickers[0] || 'USO';
+        console.log('Using ticker:', currentTicker);
+
         update(s => ({
           ...s,
           allData: data.data,
           tickers: tickers,
+          selectedTicker: currentTicker,
           dateRange: {
             min: data.date_range?.min ? new Date(data.date_range.min).getTime() : null,
             max: data.date_range?.max ? new Date(data.date_range.max).getTime() : null
