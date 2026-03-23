@@ -5,10 +5,12 @@
   import { AppBar, Dialog, Portal, Slider } from '@skeletonlabs/skeleton-svelte';
   import { fly, fade } from 'svelte/transition';
   import ConflictPopup from './lib/components/ConflictPopup.svelte';
+  import FinancialPanel from './lib/components/FinancialPanel.svelte';
 
   import maplibregl from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
   import { conflictStore, sliderTicks, dateRangeLabel, sliderThumbLabels, filteredDataWithRecency, geofenceMetrics, pointInPolygon } from './stores/conflicts.js';
+  import { financialStore, createFilteredFinancialData, createCorrelationStats, createChartData } from './stores/financial.js';
   import { addConflictsLayer } from './lib/layers/chokepoints.js';
   import { initGeofenceLayers } from './lib/layers/geofences.js';
   import { addConflictHeatmap2RecencyAffectsDensity } from './lib/layers/heatmap.js';
@@ -19,6 +21,11 @@
   let mapContainer;
   let map;
   let clearMapHighlight = null;
+
+  // Financial panel derived stores
+  const filteredFinancialData = createFilteredFinancialData(conflictStore);
+  const correlationStats = createCorrelationStats(filteredFinancialData);
+  const chartData = createChartData(filteredFinancialData);
 
   // Local slider state (bound to RangeSlider)
   let localSliderValue = [0, 0];
@@ -124,6 +131,9 @@
       // Phase 2: Background load full history
       await conflictStore.loadFullHistory();
       // Geofences auto-update via reactive $geofenceMetrics
+
+      // Load financial data
+      financialStore.load();
     });
   });
 </script>
@@ -194,7 +204,20 @@
     </div>
   </div>
 
-  <div class="map-container" bind:this={mapContainer}></div>
+  <!-- 50/50 Split Layout: Map + Financial Panel -->
+  <div class="flex flex-1 min-h-0">
+    <!-- Map: 50% -->
+    <div class="w-1/2 h-full relative" bind:this={mapContainer}></div>
+
+    <!-- Financial Panel: 50% -->
+    <div class="w-1/2 h-full">
+      <FinancialPanel
+        chartData={$chartData || []}
+        ticker={$financialStore.selectedTicker}
+        correlationStats={$correlationStats}
+      />
+    </div>
+  </div>
 </div>
 
 <Dialog open={isDrawerOpen} onOpenChange={handleOpenChange}>
@@ -245,12 +268,6 @@
     :global(.thumb-label) {
       opacity: 1 !important;
     }
-  }
-
-  .map-container {
-    flex: 1;
-    position: relative;
-    min-height: 0;
   }
 
   :global(.maplibregl-map) {
