@@ -48,6 +48,7 @@ function createFinancialStore() {
 
       try {
         const data = await getWeeklyAnalysis();
+        console.log('Financial API response:', data);
 
         // Handle null/undefined response or missing data property
         if (!data || !data.data || !Array.isArray(data.data)) {
@@ -56,6 +57,8 @@ function createFinancialStore() {
           return null;
         }
 
+        console.log(`Loaded ${data.data.length} financial records. First record:`, data.data[0]);
+
         // Extract tickers from data if not provided separately
         let tickers = data.tickers || [];
         if (!tickers.length && data.data.length > 0) {
@@ -63,6 +66,7 @@ function createFinancialStore() {
           const uniqueTickers = new Set(data.data.map(d => d.ticker).filter(Boolean));
           tickers = Array.from(uniqueTickers).sort();
         }
+        console.log('Available tickers:', tickers);
 
         update(s => ({
           ...s,
@@ -142,17 +146,24 @@ export function createFilteredFinancialData(conflictStore) {
       return [];
     }
 
-    return allData.filter(d => {
+    const filtered = allData.filter(d => {
       // Filter by ticker
       if (d.ticker !== selectedTicker) return false;
 
       // Filter by date range
       const weekTime = new Date(d.acled_week).getTime();
-      if (isNaN(weekTime)) return false;
+      if (isNaN(weekTime)) {
+        console.warn('Invalid date:', d.acled_week);
+        return false;
+      }
       if (weekTime < startTime || weekTime > endTime) return false;
 
       return true;
-    }).map(d => {
+    });
+    
+    console.log(`Financial filter: ${allData.length} total, ${filtered.length} after ticker (${selectedTicker}) and date filter (${new Date(startTime).toISOString().split('T')[0]} to ${new Date(endTime).toISOString().split('T')[0]})`);
+    
+    return filtered.map(d => {
       // Apply region filter to conflict counts
       let events = d.total_events;
       let fatalities = d.total_fatalities;
