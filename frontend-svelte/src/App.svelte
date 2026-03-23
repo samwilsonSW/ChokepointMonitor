@@ -5,7 +5,7 @@
   import { AppBar, Dialog, Portal, Slider } from '@skeletonlabs/skeleton-svelte';
   import { fly, fade } from 'svelte/transition';
   import ConflictPopup from './lib/components/ConflictPopup.svelte';
-  import FinancialPanel from './lib/components/FinancialPanel.svelte';
+  import FinancialDrawer from './lib/components/FinancialDrawer.svelte';
 
   import maplibregl from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
@@ -55,6 +55,14 @@
 
   function handleFinancialOpenChange(details) {
     isFinancialDrawerOpen = details.open;
+  }
+
+  function handleTickerChange(event) {
+    financialStore.setTicker(event.detail.ticker);
+  }
+
+  function handleRegionChange(event) {
+    financialStore.setRegion(event.detail.region);
   }
 
   /**
@@ -264,10 +272,14 @@
       </header>
 
       <div class="flex-1 overflow-y-auto p-4">
-        <FinancialPanel
-          chartData={$chartData || []}
+        <FinancialDrawer
+          data={$chartData || []}
           ticker={$financialStore.selectedTicker}
           correlationStats={$correlationStats}
+          availableTickers={$financialStore.tickers}
+          selectedRegion={$financialStore.selectedRegion}
+          on:tickerChange={handleTickerChange}
+          on:regionChange={handleRegionChange}
         />
       </div>
     </Dialog.Content>
