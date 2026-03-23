@@ -257,7 +257,7 @@
       class="fixed inset-y-0 right-0 z-[10000] w-full max-w-[600px] bg-surface-900 border-l border-white/10 shadow-2xl flex flex-col"
     >
       <header class="p-4 border-b border-white/10 flex justify-between items-center bg-surface-800">
-        <h2 class="text-xl font-bold text-white">Financial Insights</h2>
+        <h2 class="text-xl font-bold text-white">Financial Insights Pee Pee Poo Poo</h2>
         <Dialog.CloseTrigger class="btn hover:bg-white/10 rounded-full p-2 text-white">
           ✕
         </Dialog.CloseTrigger>

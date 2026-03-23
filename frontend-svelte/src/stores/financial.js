@@ -33,7 +33,7 @@ function createFinancialStore() {
     },
 
     // User selections
-    selectedTicker: 'USO',
+    selectedTicker: 'CL=F',
     selectedRegion: 'all' // 'all' | 'red_sea' | 'persian_gulf' | 'malacca'
   });
 

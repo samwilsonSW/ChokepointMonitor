@@ -240,7 +240,7 @@
   </div>
 
   <!-- Chart Container -->
-  <div class="flex-1 min-h-0 p-4" bind:this={containerElement}>
+  <div class="flex-1 min-h-0 p-4 w-full" bind:this={containerElement}>
     {#if chartData.length > 0}
       <svg bind:this={svgElement} width={width} height={height} class="w-full h-full">
         <!-- Chart rendered here -->
