@@ -105,7 +105,8 @@ export function createFilteredFinancialData(conflictStore) {
     const { allData, selectedTicker, selectedRegion, loadState } = $financial;
     const { sliderValue, loadState: conflictLoadState } = $conflict;
 
-    if (loadState !== 'ready' || conflictLoadState === 'idle') {
+    // Financial data must be ready and conflict store must have loaded
+    if (loadState !== 'ready' || !['ytd-ready', 'full-loading', 'complete'].includes(conflictLoadState)) {
       return [];
     }
 
