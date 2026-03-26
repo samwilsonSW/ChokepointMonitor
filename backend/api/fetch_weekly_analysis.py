@@ -10,10 +10,12 @@ chokepoint based count of events, fatalities, and 'pending' for weeks that don't
 from ..supabase_client import _get_client
 from typing import List, Dict, Any
 
+
 def fetch_weekly_analysis(start_week: str = None, end_week: str = None) -> List[Dict[str, Any]]:
     """
-    Fetch weekly aggregated conflict and financial data from the view `chokepoint_weekly_analysis`.
+    Fetch all weekly aggregated conflict and financial data from the view.
     Synchronous function to run in executor.
+    Client filters by date range and ticker as needed.
     """
     client = _get_client()
 

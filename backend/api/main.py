@@ -102,13 +102,18 @@ async def get_chokepoint_metrics(start_date: str = None):
         ]
     }
 
+from fastapi import HTTPException
+
 @app.get("/weekly-analysis")
 async def get_weekly_analysis(start_week: str = None, end_week: str = None, ticker: str = None):
+
     """
-    Get weekly aggregated conflict and financial data for correlation analysis.
+    Get all weekly aggregated conflict and financial data.
+    Client filters by date range and ticker as needed.
     """
     try:
         data = await asyncio.get_event_loop().run_in_executor(
+
             None,
             fetch_weekly_analysis,
             start_week,
