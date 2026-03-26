@@ -1,5 +1,22 @@
 const API_BASE_URL = ""; 
 
+export async function getWeeklyAnalysis() {
+    const url = `${API_BASE_URL}/weekly-analysis`;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log(`Loaded ${data.count} weekly analysis records`);
+        return data;
+    } catch (error) {
+        console.error("Could not fetch weekly analysis:", error);
+        return null;
+    }
+}
+
 export async function getConflictGeoJSON(startDate = null) {
     let url = `${API_BASE_URL}/conflicts`;
     if (startDate) {

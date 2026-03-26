@@ -5,20 +5,28 @@
   import { AppBar, Dialog, Portal, Slider } from '@skeletonlabs/skeleton-svelte';
   import { fly, fade } from 'svelte/transition';
   import ConflictPopup from './lib/components/ConflictPopup.svelte';
+  import FinancialDrawer from './lib/components/FinancialDrawer.svelte';
 
   import maplibregl from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
   import { conflictStore, sliderTicks, dateRangeLabel, sliderThumbLabels, filteredDataWithRecency, geofenceMetrics, pointInPolygon } from './stores/conflicts.js';
+  import { financialStore, createFilteredFinancialData, createCorrelationStats, createChartData } from './stores/financial.js';
   import { addConflictsLayer } from './lib/layers/chokepoints.js';
   import { initGeofenceLayers } from './lib/layers/geofences.js';
   import { addConflictHeatmap2RecencyAffectsDensity } from './lib/layers/heatmap.js';
 
   let isDrawerOpen = false;
+  let isFinancialDrawerOpen = false;
   let selectedEvents = [];
   let selectedRegionName = null;  // Set when opened from geofence click
   let mapContainer;
   let map;
   let clearMapHighlight = null;
+
+  // Financial panel derived stores
+  const filteredFinancialData = createFilteredFinancialData(conflictStore);
+  const correlationStats = createCorrelationStats(filteredFinancialData);
+  const chartData = createChartData(filteredFinancialData);
 
   // Local slider state (bound to RangeSlider)
   let localSliderValue = [0, 0];
@@ -43,6 +51,18 @@
       if (clearMapHighlight) clearMapHighlight();
       selectedRegionName = null;
     }
+  }
+
+  function handleFinancialOpenChange(details) {
+    isFinancialDrawerOpen = details.open;
+  }
+
+  function handleTickerChange(event) {
+    financialStore.setTicker(event.detail.ticker);
+  }
+
+  function handleRegionChange(event) {
+    financialStore.setRegion(event.detail.region);
   }
 
   /**
@@ -124,6 +144,9 @@
       // Phase 2: Background load full history
       await conflictStore.loadFullHistory();
       // Geofences auto-update via reactive $geofenceMetrics
+
+      // Load financial data
+      financialStore.load();
     });
   });
 </script>
@@ -194,9 +217,20 @@
     </div>
   </div>
 
-  <div class="map-container" bind:this={mapContainer}></div>
+  <div class="map-container relative" bind:this={mapContainer}>
+    <!-- Floating Insights Button -->
+    {#if $financialStore.loadState === 'ready'}
+      <button 
+        class="absolute bottom-6 left-6 z-50 px-4 py-2 bg-primary-500 text-white rounded-lg shadow-lg hover:bg-primary-600 transition-colors"
+        on:click={() => isFinancialDrawerOpen = true}
+      >
+        Insights
+      </button>
+    {/if}
+  </div>
 </div>
 
+<!-- Conflict Events Drawer -->
 <Dialog open={isDrawerOpen} onOpenChange={handleOpenChange}>
   <Dialog.Trigger />
 
@@ -215,6 +249,38 @@
 
       <div class="flex-1 overflow-y-auto p-4">
         <ConflictPopup events={selectedEvents} regionName={selectedRegionName} />
+      </div>
+    </Dialog.Content>
+  </Portal>
+</Dialog>
+
+<!-- Financial Insights Drawer -->
+<Dialog open={isFinancialDrawerOpen} onOpenChange={handleFinancialOpenChange}>
+  <Dialog.Trigger />
+
+  <Portal>
+    <Dialog.Backdrop class="fixed inset-0 z-[9999] bg-black/20" />
+
+    <Dialog.Content 
+      class="fixed inset-y-0 right-0 z-[10000] w-[75vw] max-w-none bg-surface-900 border-l border-white/10 shadow-2xl flex flex-col"
+    >
+      <header class="p-4 border-b border-white/10 flex justify-between items-center bg-surface-800">
+        <h2 class="text-xl font-bold text-white">Financial Insights</h2>
+        <Dialog.CloseTrigger class="btn hover:bg-white/10 rounded-full p-2 text-white">
+          ✕
+        </Dialog.CloseTrigger>
+      </header>
+
+      <div class="flex-1 overflow-y-auto p-4">
+        <FinancialDrawer
+          data={$chartData || []}
+          ticker={$financialStore.selectedTicker}
+          correlationStats={$correlationStats}
+          availableTickers={$financialStore.tickers}
+          selectedRegion={$financialStore.selectedRegion}
+          on:tickerChange={handleTickerChange}
+          on:regionChange={handleRegionChange}
+        />
       </div>
     </Dialog.Content>
   </Portal>

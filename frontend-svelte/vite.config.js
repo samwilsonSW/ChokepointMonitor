@@ -23,6 +23,10 @@ export default defineConfig({
       '/chokepoint-regions': {
         target: 'http://localhost:8000',
         changeOrigin: true,
+      },
+      '/weekly-analysis': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
       }
     }
   }

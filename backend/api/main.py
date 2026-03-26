@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from datetime import date
@@ -105,27 +105,41 @@ async def get_chokepoint_metrics(start_date: str = None):
 from fastapi import HTTPException
 
 @app.get("/weekly-analysis")
-async def get_weekly_analysis(): 
+async def get_weekly_analysis(start_week: str = None, end_week: str = None, ticker: str = None):
+
     """
     Get all weekly aggregated conflict and financial data.
     Client filters by date range and ticker as needed.
     """
     try:
         data = await asyncio.get_event_loop().run_in_executor(
-            _executor, 
-            fetch_weekly_analysis
+
+            None,
+            fetch_weekly_analysis,
+            start_week,
+            end_week
         )
-        
+
+        # Filter by ticker client-side if specified (view has all tickers)
+        if ticker:
+            data = [d for d in data if d.get("ticker") == ticker]
+
+        # Extract unique tickers and date range for frontend
+        tickers = list(set(d.get("ticker") for d in data if d.get("ticker")))
+        weeks = [d.get("acled_week") for d in data if d.get("acled_week")]
+
         return {
             "data": data,
             "count": len(data),
-            "tickers": list(set(row["ticker"] for row in data)) if data else [],
+            "tickers": tickers,
             "date_range": {
-                "min": min(row["acled_week"] for row in data) if data else None,
-                "max": max(row["acled_week"] for row in data) if data else None
-            }
+                "min": min(weeks) if weeks else None,
+                "max": max(weeks) if weeks else None
+            },
+            "start_week": start_week,
+            "end_week": end_week
         }
-    
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
   
