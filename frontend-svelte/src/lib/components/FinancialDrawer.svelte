@@ -182,11 +182,9 @@
     const xAxis = g.append('g')
       .attr('transform', `translate(0,${innerHeight})`)
       .call(axisBottom(xScale)
-        .tickValues(xScale.domain().filter((_, i) => i % Math.ceil(filteredData.length / 8) === 0))
-        .tickFormat(d => {
-          const date = new Date(d);
-          return `${date.getMonth() + 1}/${date.getFullYear().toString().slice(2)}`;
-        })
+        // Adjust the modulo (e.g., % 2 or % 4) depending on how many weeks you want to skip
+        .tickValues(xScale.domain().filter((_, i) => i % 1 === 0)) 
+        .tickFormat(d => d) // Simply return the week string/value
       );
 
     xAxis.selectAll('text')
