@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
 
   // skeleton components
-  import { AppBar, Dialog, Portal, Slider } from '@skeletonlabs/skeleton-svelte';
+  import { AppBar, Modal, Slider } from '@skeletonlabs/skeleton-svelte';
   import { fly, fade } from 'svelte/transition';
   import ConflictPopup from './lib/components/ConflictPopup.svelte';
   import FinancialDrawer from './lib/components/FinancialDrawer.svelte';
@@ -222,7 +222,7 @@
     {#if $financialStore.loadState === 'ready'}
       <button 
         class="absolute bottom-6 left-6 z-50 px-4 py-2 bg-primary-500 text-white rounded-lg shadow-lg hover:bg-primary-600 transition-colors"
-        on:click={() => isFinancialDrawerOpen = true}
+        onclick={() => isFinancialDrawerOpen = true}
       >
         Insights
       </button>
@@ -231,60 +231,74 @@
 </div>
 
 <!-- Conflict Events Drawer -->
-<Dialog open={isDrawerOpen} onOpenChange={handleOpenChange}>
-  <Dialog.Trigger />
+{#if isDrawerOpen}
+  <!-- Backdrop -->
+  <button
+    class="fixed inset-0 z-[9999] bg-black/20"
+    onclick={() => isDrawerOpen = false}
+    aria-label="Close drawer"
+  ></button>
+  
+  <!-- Drawer -->
+  <div 
+    class="fixed inset-y-0 right-0 z-[10000] w-full max-w-[420px] bg-surface-900 border-l border-white/10 shadow-2xl flex flex-col"
+    transition:fly={{ x: 420, duration: 200 }}
+  >
+    <header class="p-4 border-b border-white/10 flex justify-between items-center bg-surface-800">
+      <h2 class="text-xl font-bold text-white">Conflict Events</h2>
+      <button 
+        class="btn hover:bg-white/10 rounded-full p-2 text-white"
+        onclick={() => isDrawerOpen = false}
+        aria-label="Close"
+      >
+        ✕
+      </button>
+    </header>
 
-  <Portal>
-    <Dialog.Backdrop class="fixed inset-0 z-[9999] bg-black/20" />
-
-    <Dialog.Content 
-      class="fixed inset-y-0 right-0 z-[10000] w-full max-w-[420px] bg-surface-900 border-l border-white/10 shadow-2xl flex flex-col"
-    >
-      <header class="p-4 border-b border-white/10 flex justify-between items-center bg-surface-800">
-        <h2 class="text-xl font-bold text-white">Conflict Events</h2>
-        <Dialog.CloseTrigger class="btn hover:bg-white/10 rounded-full p-2 text-white">
-          ✕
-        </Dialog.CloseTrigger>
-      </header>
-
-      <div class="flex-1 overflow-y-auto p-4">
-        <ConflictPopup events={selectedEvents} regionName={selectedRegionName} />
-      </div>
-    </Dialog.Content>
-  </Portal>
-</Dialog>
+    <div class="flex-1 overflow-y-auto p-4">
+      <ConflictPopup events={selectedEvents} regionName={selectedRegionName} />
+    </div>
+  </div>
+{/if}
 
 <!-- Financial Insights Drawer -->
-<Dialog open={isFinancialDrawerOpen} onOpenChange={handleFinancialOpenChange}>
-  <Dialog.Trigger />
+{#if isFinancialDrawerOpen}
+  <!-- Backdrop -->
+  <button
+    class="fixed inset-0 z-[9999] bg-black/20"
+    onclick={() => isFinancialDrawerOpen = false}
+    aria-label="Close drawer"
+  ></button>
+  
+  <!-- Drawer -->
+  <div 
+    class="fixed inset-y-0 right-0 z-[10000] w-[75vw] max-w-none bg-surface-900 border-l border-white/10 shadow-2xl flex flex-col"
+    transition:fly={{ x: '75vw', duration: 200 }}
+  >
+    <header class="p-4 border-b border-white/10 flex justify-between items-center bg-surface-800">
+      <h2 class="text-xl font-bold text-white">Financial Insights</h2>
+      <button 
+        class="btn hover:bg-white/10 rounded-full p-2 text-white"
+        onclick={() => isFinancialDrawerOpen = false}
+        aria-label="Close"
+      >
+        ✕
+      </button>
+    </header>
 
-  <Portal>
-    <Dialog.Backdrop class="fixed inset-0 z-[9999] bg-black/20" />
-
-    <Dialog.Content 
-      class="fixed inset-y-0 right-0 z-[10000] w-[75vw] max-w-none bg-surface-900 border-l border-white/10 shadow-2xl flex flex-col"
-    >
-      <header class="p-4 border-b border-white/10 flex justify-between items-center bg-surface-800">
-        <h2 class="text-xl font-bold text-white">Financial Insights</h2>
-        <Dialog.CloseTrigger class="btn hover:bg-white/10 rounded-full p-2 text-white">
-          ✕
-        </Dialog.CloseTrigger>
-      </header>
-
-      <div class="flex-1 overflow-y-auto p-4">
-        <FinancialDrawer
-          data={$chartData || []}
-          ticker={$financialStore.selectedTicker}
-          correlationStats={$correlationStats}
-          availableTickers={$financialStore.tickers}
-          selectedRegion={$financialStore.selectedRegion}
-          on:tickerChange={handleTickerChange}
-          on:regionChange={handleRegionChange}
-        />
-      </div>
-    </Dialog.Content>
-  </Portal>
-</Dialog>
+    <div class="flex-1 overflow-y-auto p-4">
+      <FinancialDrawer
+        data={$chartData || []}
+        ticker={$financialStore.selectedTicker}
+        correlationStats={$correlationStats}
+        availableTickers={$financialStore.tickers}
+        selectedRegion={$financialStore.selectedRegion}
+        on:tickerChange={handleTickerChange}
+        on:regionChange={handleRegionChange}
+      />
+    </div>
+  </div>
+{/if}
 
 <style>
   .layout {
