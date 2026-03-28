@@ -2,10 +2,11 @@
   import { onMount } from 'svelte';
 
   // skeleton components
-  import { AppBar, Modal, Slider } from '@skeletonlabs/skeleton-svelte';
+  import { AppBar } from '@skeletonlabs/skeleton-svelte';
   import { fly, fade } from 'svelte/transition';
   import ConflictPopup from './lib/components/ConflictPopup.svelte';
   import FinancialDrawer from './lib/components/FinancialDrawer.svelte';
+  import RangeSlider from './lib/components/RangeSlider.svelte';
 
   import maplibregl from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
@@ -168,45 +169,14 @@
       <span class="text-sm text-surface-300 whitespace-nowrap">Date Range:</span>
       {#if $sliderTicks.length > 0}
         <div class="flex-1 min-w-0">
-          <!--
-            Slider from @skeletonlabs/skeleton-svelte
-            Docs: https://www.skeleton.dev/docs/svelte/framework-components/slider
-            Uses compound component pattern for range selection
-          -->
-          <Slider
+          <RangeSlider
             value={localSliderValue}
             min={$conflictStore.dataRange.min}
             max={$conflictStore.dataRange.max}
-            step={null}
-            onValueChange={handleSliderChange}
-          >
-            <Slider.Control>
-              <Slider.Track class="bg-surface-600 h-2 rounded-full">
-                <Slider.Range class="bg-primary-500 h-2 rounded-full" />
-              </Slider.Track>
-              <!-- Thumb 0 with floating label -->
-              <Slider.Thumb index={0} class="thumb-with-label w-4 h-4 bg-primary-500 rounded-full border-2 border-surface-900 relative group">
-                <Slider.HiddenInput />
-                <span class="thumb-label absolute -top-7 left-1/2 -translate-x-1/2 bg-surface-700 text-surface-100 text-xs px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                  {$sliderThumbLabels[0]}
-                </span>
-              </Slider.Thumb>
-              <!-- Thumb 1 with floating label -->
-              <Slider.Thumb index={1} class="thumb-with-label w-4 h-4 bg-primary-500 rounded-full border-2 border-surface-900 relative group">
-                <Slider.HiddenInput />
-                <span class="thumb-label absolute -top-7 left-1/2 -translate-x-1/2 bg-surface-700 text-surface-100 text-xs px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                  {$sliderThumbLabels[1]}
-                </span>
-              </Slider.Thumb>
-            </Slider.Control>
-            <Slider.MarkerGroup>
-              {#each $sliderTicks as tick}
-                <Slider.Marker value={tick.value}>
-                  <span class="text-xs text-surface-400 whitespace-nowrap">{tick.label}</span>
-                </Slider.Marker>
-              {/each}
-            </Slider.MarkerGroup>
-          </Slider>
+            onChange={handleSliderChange}
+            ticks={$sliderTicks}
+            thumbLabels={$sliderThumbLabels}
+          />
         </div>
         <span class="text-xs text-surface-400 whitespace-nowrap">
           {$dateRangeLabel}
