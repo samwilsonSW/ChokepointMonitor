@@ -144,7 +144,7 @@ async def get_weekly_analysis(start_week: str = None, end_week: str = None, tick
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
   
 
-# app.mount("/", StaticFiles(directory="frontend-svelte/dist", html=True), name="frontend")
+app.mount("/", StaticFiles(directory="frontend-svelte/dist", html=True), name="frontend")
 
 if __name__ == "__main__":
     import uvicorn
