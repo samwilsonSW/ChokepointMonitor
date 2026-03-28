@@ -14,9 +14,12 @@
     "use:node": "nvm install && nvm use",
     "preinstall": "node -e \"const [maj,min]=process.versions.node.split('.').map(Number); if(maj<22 || (maj===22 && min<12)) { console.error('\\n❌ Node 22.12+ required. Current: '+process.versions.node+'\\n'); process.exit(1); }\"",
     "install:all": "pip install -r backend/requirements.txt && npm install",
+    "build:frontend": "npm run build -w frontend-svelte",
+    "build: backend": "python -m backend.api.main",
     "dev:frontend": "npm run dev -w frontend-svelte",
     "dev:backend": "python -m backend.api.main",
-    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\""
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "build": "concurrently \"npm run build:frontend\" \" npm run build:backend\""
   },
   "dependencies": {
     "@maptiler/sdk": "^3.11.1",
