@@ -1,6 +1,10 @@
-@import "tailwindcss";
-@import "@skeletonlabs/skeleton";
-@import "@skeletonlabs/skeleton-svelte";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import Skeleton theme - using standard CSS import for v3 */
+@import "@skeletonlabs/skeleton/themes/theme-modern.css";
+@import "@skeletonlabs/skeleton/styles/all.css";
 
 /* Theme: Set in index.html via data-theme attribute */
 
