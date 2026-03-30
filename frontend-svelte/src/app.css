@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* Import Skeleton styles for v3 + Tailwind v4 */
-@import "@skeletonlabs/skeleton/themes/modern";
+@import "@skeletonlabs/skeleton/themes/legacy";
 @import "@skeletonlabs/skeleton";
 
 /* Theme: Set in index.html via data-theme attribute */
