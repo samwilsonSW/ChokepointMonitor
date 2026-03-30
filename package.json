@@ -17,7 +17,7 @@
     "dev:frontend": "npm run dev -w frontend-svelte",
     "dev:backend": "python -m backend.api.main",
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
-    "render:build": "cd frontend-svelte && npm install && npm run build",
+    "render:build": "pip install -r backend/requirements.txt && cd frontend-svelte && npm install && npm run build",
     "render:start": "uvicorn backend.api.main:app --host 0.0.0.0 --port $PORT"
   },
   "devDependencies": {
