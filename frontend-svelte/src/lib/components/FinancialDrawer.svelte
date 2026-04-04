@@ -110,7 +110,6 @@
       .attr('class', 'grid')
       .call(axisLeft(yPriceScale)
         .tickSize(-innerWidth)
-        .tickFormat('')
       )
       .selectAll('line')
       .attr('stroke', 'rgba(255,255,255,0.1)');
@@ -259,30 +258,32 @@
   <div class="space-y-3 mb-4">
     <!-- Ticker Selector -->
     <div class="flex flex-col gap-1">
-      <label class="text-xs text-surface-400 uppercase tracking-wide">Ticker</label>
-      <select 
-        class="input preset-tonal-surface border-surface-600 text-white text-sm py-2 px-3 rounded"
-        value={ticker}
-        on:change={handleTickerChange}
-      >
-        {#each availableTickers as t}
-          <option value={t}>{t}</option>
-        {/each}
-      </select>
+      <label class="text-xs text-surface-400 uppercase tracking-wide">Ticker
+        <select 
+          class="input preset-tonal-surface border-surface-600 text-white text-sm py-2 px-3 rounded"
+          value={ticker}
+          on:change={handleTickerChange}
+        >
+          {#each availableTickers as t}
+            <option value={t} class="bg-surface-800 text-white">{t}</option>
+          {/each}
+        </select>
+      </label>
     </div>
 
     <!-- Region Filter -->
     <div class="flex flex-col gap-1">
-      <label class="text-xs text-surface-400 uppercase tracking-wide">Region Filter</label>
-      <select 
-        class="input preset-tonal-surface border-surface-600 text-white text-sm py-2 px-3 rounded"
-        bind:value={selectedRegion}
-        on:change={handleRegionChange}
-      >
-        {#each regionOptions as option}
-          <option value={option.value}>{option.label}</option>
-        {/each}
-      </select>
+      <label class="text-xs text-surface-400 uppercase tracking-wide">Region Filter
+        <select 
+          class="input preset-tonal-surface border-surface-600 text-white text-sm py-2 px-3 rounded"
+          bind:value={selectedRegion}
+          on:change={handleRegionChange}
+        >
+          {#each regionOptions as option}
+            <option value={option.value}>{option.label}</option>
+          {/each}
+        </select>
+      </label>
     </div>
   </div>
 

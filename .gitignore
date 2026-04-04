@@ -74,3 +74,6 @@ dist-ssr/
 # --- OS Specific ---
 .DS_Store
 Thumbs.db
+
+# --- Not production ready ---
+insights/
