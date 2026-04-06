@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { onMount, createEventDispatcher } from 'svelte';
   import { scaleLinear, scaleBand } from 'd3-scale';
   import { line } from 'd3-shape';
@@ -108,8 +108,9 @@
     // Grid lines
     g.append('g')
       .attr('class', 'grid')
-      .call(axisLeft(yPriceScale)
+      .call((axisLeft(yPriceScale) as any)
         .tickSize(-innerWidth)
+        .tickFormat(() => '')
       )
       .selectAll('line')
       .attr('stroke', 'rgba(255,255,255,0.1)');

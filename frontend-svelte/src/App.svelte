@@ -153,7 +153,7 @@
 </script>
 
 <div class="layout">
-  <AppBar class="shrink-0">
+  <AppBar>
     <svelte:fragment slot="lead">
       <strong class="text-xl">Chokepoint Monitor</strong>
     </svelte:fragment>
@@ -246,7 +246,7 @@
     transition:fly={{ x: '75vw', duration: 200 }}
   >
     <header class="p-4 border-b border-white/10 flex justify-between items-center bg-surface-800">
-      <h2 class="text-xl font-bold text-white">Financial Insights</h2>
+      
       <button 
         class="btn hover:bg-white/10 rounded-full p-2 text-white"
         onclick={() => isFinancialDrawerOpen = false}
