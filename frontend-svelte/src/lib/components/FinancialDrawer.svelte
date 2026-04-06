@@ -280,7 +280,7 @@
           on:change={handleRegionChange}
         >
           {#each regionOptions as option}
-            <option value={option.value}>{option.label}</option>
+            <option value={option.value} class="bg-surface-800 text-white">{option.label}</option>
           {/each}
         </select>
       </label>
@@ -295,10 +295,10 @@
           r = <span class="font-mono {correlationColor}">{correlationStats.r}</span>
         </span>
         <span class="text-surface-400">
-          n = <span class="text-white font-mono">{correlationStats.n}</span>
+          n = <span class="font-mono">{correlationStats.n}</span>
         </span>
       </div>
-      <span class="text-xs text-surface-500 italic">{correlationStats.interpretation}</span>
+      <span class="text-xs text-surface-300 italic">{correlationStats.interpretation}</span>
     </div>
   </div>
 

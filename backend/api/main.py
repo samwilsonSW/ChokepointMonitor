@@ -106,7 +106,6 @@ from fastapi import HTTPException
 
 @app.get("/weekly-analysis")
 async def get_weekly_analysis(start_week: str = None, end_week: str = None, ticker: str = None):
-
     """
     Get all weekly aggregated conflict and financial data.
     Client filters by date range and ticker as needed.
@@ -144,7 +143,7 @@ async def get_weekly_analysis(start_week: str = None, end_week: str = None, tick
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
   
 
-app.mount("/", StaticFiles(directory="frontend-svelte/dist", html=True), name="frontend")
+# app.mount("/", StaticFiles(directory="frontend-svelte/dist", html=True), name="frontend")
 
 if __name__ == "__main__":
     import uvicorn
