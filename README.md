@@ -59,7 +59,7 @@ The application correlates armed conflict events (ACLED data) with financial mar
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                              DATA SOURCES                                    │
+│                              DATA SOURCES                                   │
 ├─────────────────┬─────────────────────────────┬─────────────────────────────┤
 │   ACLED API     │      Yahoo Finance          │    GDELT (designed)         │
 │   (Conflict     │      (Oil futures,          │    (News sentiment          │
@@ -68,7 +68,7 @@ The application correlates armed conflict events (ACLED data) with financial mar
          │                       │                             │
          ▼                       ▼                             ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         DATA INGESTION LAYER                                 │
+│                         DATA INGESTION LAYER                                │
 │  ┌──────────────────────┐  ┌──────────────────────┐  ┌────────────────────┐ │
 │  │ import_acled_xlsx.py │  │ import_yfinance_     │  │ ingest_gdelt.py    │ │
 │  │ (Batch geocoding,    │  │    data.py           │  │ (BigQuery, on ice) │ │
@@ -78,54 +78,54 @@ The application correlates armed conflict events (ACLED data) with financial mar
               │                         │                         │
               ▼                         ▼                         ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         SUPABASE (PostgreSQL + PostGIS)                      │
+│                         SUPABASE (PostgreSQL + PostGIS)                     │
 │  ┌────────────────────────┐  ┌────────────────────────────────────────────┐ │
 │  │ conflict_events_       │  │ financial_prices_daily                     │ │
 │  │   enriched             │  │ (ticker, date, OHLCV)                      │ │
 │  │ (ACLED + geocoded)     │  └────────────────────────────────────────────┘ │
-│  └──────────┬─────────────┘                                                   │
-│             │                                                                 │
+│  └──────────┬─────────────┘                                                 │
+│             │                                                               │
 │  ┌──────────▼─────────────┐  ┌────────────────────────────────────────────┐ │
 │  │ chokepoint_regions     │  │ weekly_analysis VIEW                       │ │
 │  │ (GeoJSON polygons,     │  │ (JOIN conflicts + financials + aggregation)│ │
 │  │  center points)        │  └────────────────────────────────────────────┘ │
-│  └──────────┬─────────────┘                                                   │
-│             │         ┌──────────────────────────────────────────────────┐   │
-│             └────────►│ region_conflict_stats() RPC function             │   │
-│                       │ (PostGIS ST_Contains for geofence queries)       │   │
-│                       └──────────────────────────────────────────────────┘   │
+│  └──────────┬─────────────┘                                                 │
+│             │         ┌──────────────────────────────────────────────────┐  │
+│             └────────►│ region_conflict_stats() RPC function             │  │
+│                       │ (PostGIS ST_Contains for geofence queries)       │  │
+│                       └──────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────────────┘
               │
               ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         API LAYER (FastAPI + Python)                         │
-│                                                                              │
-│  GET /conflicts              → GeoJSON conflict events with date filtering   │
-│  GET /chokepoint-regions     → GeoJSON polygons for map rendering            │
-│  GET /chokepoint-metrics     → Aggregated stats per region (count, risk)     │
-│  GET /weekly-analysis        → Joined financial + conflict time series       │
-│                                                                              │
-│  ThreadPoolExecutor for async Supabase queries (sync client in async loop)   │
+│                         API LAYER (FastAPI + Python)                        │
+│                                                                             │
+│  GET /conflicts              → GeoJSON conflict events with date filtering  │
+│  GET /chokepoint-regions     → GeoJSON polygons for map rendering           │
+│  GET /chokepoint-metrics     → Aggregated stats per region (count, risk)    │
+│  GET /weekly-analysis        → Joined financial + conflict time series      │
+│                                                                             │
+│  ThreadPoolExecutor for async Supabase queries (sync client in async loop)  │
 └─────────────────────────────────────────────────────────────────────────────┘
               │
               ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         FRONTEND (Svelte 5 + MapLibre)                       │
-│                                                                              │
+│                         FRONTEND (Svelte 5 + MapLibre)                      │
+│                                                                             │
 │  ┌──────────────────────────────────────────────────────────────────────┐   │
 │  │  Data Stores (Svelte stores)                                         │   │
 │  │  ├── conflictStore: Two-phase loading (YTD → full history)           │   │
 │  │  ├── financialStore: Weekly analysis with ticker/region filters      │   │
 │  │  └── Derived stores: Recency calc, correlation stats, geofence metrics│  │
 │  └──────────────────────────────────────────────────────────────────────┘   │
-│                                                                              │
+│                                                                             │
 │  ┌──────────────────────────────────────────────────────────────────────┐   │
 │  │  Map Layers                                                          │   │
 │  │  ├── Heatmap (recency-weighted density)                              │   │
 │  │  ├── Conflict points (clickable clusters)                            │   │
 │  │  └── Geofence polygons (risk-colored overlays)                       │   │
 │  └──────────────────────────────────────────────────────────────────────┘   │
-│                                                                              │
+│                                                                             │
 │  ┌──────────────────────────────────────────────────────────────────────┐   │
 │  │  UI Components                                                       │   │
 │  │  ├── RangeSlider (custom quarterly-tick date selector)               │   │
@@ -141,10 +141,10 @@ The application correlates armed conflict events (ACLED data) with financial mar
 ACLED CSV/XLSX
      │
      ▼
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│ Geocode locations│────►│ Supabase insert │────►│ PostGIS indexing│
-│ (lat/lon cleanup)│     │ (batch upsert)  │     │ (spatial index) │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
+┌──────────────────┐     ┌────────────────┐    ┌─────────────────┐
+│ Geocode locations│────►│ Supabase insert│───►│ PostGIS indexing│
+│ (lat/lon cleanup)│     │ (batch upsert) │    │ (spatial index) │
+└──────────────────┘     └────────────────┘    └─────────────────┘
                                                           │
                     ┌──────────────────────────────────────┘
                     ▼
@@ -181,7 +181,7 @@ Client: ┌───────────────────────
         │                                         │
         │ For each event:                         │
         │   recency = (event_date - slider_start) │
-        │             / (slider_end - slider_start)│
+        │            / (slider_end - slider_start)│
         │                                         │
         │ Result: 0.0 (oldest) → 1.0 (newest)     │
         └─────────────────────────────────────────┘
