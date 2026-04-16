@@ -82,6 +82,14 @@ npm run dev
 
 ## What I Learned
 
+My biggest takeaway here is that global energy market movements are impacted by a lot more than just conflict events. I happened to be finishing up this MVP during the first month of the US-Iran conflict and the events around the Strait of Hormuz, causing a good amount of correlation, but this seems to be the exception, not the rule.
+
+Outside of financial takeaways, I learned that architecture and system design is an extremely important thing to think about when building a project. The pipelines for this project were draining, particularly because I didn't take the time prior to starting to whiteboard out a clean design for how data would flow through the system. Going forward, I will be much more thoughtful about these types of decisions before building them out.
+
+The dead ends: I spent a week trying to get some sort of real-time data view early on, wanting to build something that felt responsive and impressive. This inevitably resulted in wasting a week trying to build something that wasn't worth the time, effort, or money for a project of this scale. I understand this now: Tradeoffs are important, and recognizing them saves time, effort, and mental well-being. 
+
+This project was my first big undertaking, and it's made me enjoy being a developer in a way I hadn't before. There are improvements that should be made, especially with the UI, and maybe I'll come back around and clean those up in the future. For now, I'm moving on to another project, one that doesn't make me feel as attached to one single hypothesis or idea.
+
 ---
 
 **Built by [Sam Wilson](https://github.com/samwilsonSW)**
