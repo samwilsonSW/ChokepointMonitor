@@ -2,7 +2,6 @@
 
 **🌐 Live Demo: [chokepointmonitor.com](https://chokepointmonitor.com)**
 
-[![Deployed on Render](https://img.shields.io/badge/deployed%20on-Render-46E3B7.svg)](https://render.com)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Svelte](https://img.shields.io/badge/Svelte-FF3E00.svg?logo=svelte&logoColor=white)](https://svelte.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-3ECF8E.svg?logo=supabase&logoColor=white)](https://supabase.com/)
@@ -25,6 +24,8 @@ Chokepoint Monitor ingests conflict event data from [ACLED](https://acleddata.co
 
 ## Try It
 
+> The map needs a browser with WebGL and hardware acceleration enabled. If the map fails to load (for example a "Failed to initialize WebGL" error), turn hardware acceleration on in your browser settings or try another browser.
+
 1. **Explore the heatmap** — Navigate to the Persian Gulf or Red Sea. Darker clusters = higher conflict density.
 2. **Use the date slider** — Filter events by time period (defaults to YTD, expands to 3-year history).
 3. **Click a geofence** — Click any chokepoint polygon to see conflict events within that region.
@@ -35,7 +36,9 @@ Chokepoint Monitor ingests conflict event data from [ACLED](https://acleddata.co
 
 ## Architecture
 
-The backend is a FastAPI service backed by Supabase (PostgreSQL + PostGIS). Conflict data is ingested via a Python pipeline from ACLED exports; financial data is fetched daily from Yahoo Finance via a GitHub Actions cron job. The frontend is Svelte 5 with MapLibre GL for WebGL map rendering and D3.js for correlation charts.
+The backend is a FastAPI service backed by Supabase (PostgreSQL + PostGIS). Conflict data comes from ACLED's weekly aggregated spreadsheets, which a scheduled weekly job downloads and imports with a Python pipeline; financial data is fetched daily from Yahoo Finance via a GitHub Actions cron job. The frontend is Svelte 5 with MapLibre GL for WebGL map rendering and D3.js for correlation charts.
+
+Hosting: the site is self-hosted. The FastAPI service serves the built Svelte frontend and is exposed to the internet through a Cloudflare Tunnel (it is no longer deployed on Render).
 
 A key design decision: recency weighting for the heatmap is computed client-side on every slider change, so visual density stays consistent whether you're viewing 3 months or 3 years of data — no server round-trip needed.
 
@@ -45,7 +48,7 @@ A key design decision: recency weighting for the heatmap is computed client-side
 
 **Backend**: FastAPI · PostgreSQL 15 + PostGIS · Supabase · Python · Uvicorn  
 **Frontend**: Svelte 5 · MapLibre GL · D3.js · Tailwind CSS · Skeleton UI  
-**Infrastructure**: Render · GitHub Actions (daily data pipeline) · Vite
+**Infrastructure**: Self-hosted · Cloudflare Tunnel · GitHub Actions (daily financial data) · scheduled weekly ACLED import · Vite
 
 ---
 
@@ -75,8 +78,6 @@ npm run dev
 | `npm run dev` | Run frontend + backend in parallel |
 | `npm run dev:frontend` | Svelte dev server only |
 | `npm run dev:backend` | FastAPI server only |
-| `npm run render:build` | Production build for Render |
-| `npm run render:start` | Production server for Render |
 
 ---
 
