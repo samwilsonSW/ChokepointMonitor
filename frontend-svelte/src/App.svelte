@@ -22,6 +22,26 @@
   let selectedRegionName = null;  // Set when opened from geofence click
   let mapContainer;
   let map;
+  let mapError = null;  // Set when WebGL is unavailable and the map can't render
+
+  /**
+   * MapLibre needs WebGL. Some browsers have it disabled (hardware acceleration
+   * off, GPU process crashed/blocklisted) — detect that up front so we can show
+   * a helpful message instead of a blank panel + uncaught error.
+   */
+  function hasWebGL() {
+    try {
+      const canvas = document.createElement('canvas');
+      return !!(window.WebGLRenderingContext &&
+        (canvas.getContext('webgl2') || canvas.getContext('webgl')));
+    } catch {
+      return false;
+    }
+  }
+
+  const WEBGL_ERROR_MESSAGE =
+    'The map needs WebGL, which is disabled or unavailable in this browser. ' +
+    'Turn on hardware acceleration in your browser settings and restart it, or try another browser.';
   let clearMapHighlight = null;
 
   // Financial panel derived stores
@@ -125,12 +145,24 @@
   }
 
   onMount(async () => {
-    map = new maplibregl.Map({
+    if (!hasWebGL()) {
+      mapError = WEBGL_ERROR_MESSAGE;
+      return;
+    }
+
+    try {
+      map = new maplibregl.Map({
       container: mapContainer,
       style: `https://api.maptiler.com/maps/dataviz/style.json?key=${import.meta.env.VITE_MAPTILER_KEY}`,
       center: [66.0, 10.0],
       zoom: 3
     });
+    } catch (err) {
+      console.error('Failed to initialize map:', err);
+      map = null;
+      mapError = WEBGL_ERROR_MESSAGE;
+      return;
+    }
 
     map.on('load', async () => {
       // Phase 1: Load YTD data and region definitions
@@ -188,6 +220,14 @@
   </div>
 
   <div class="map-container relative" bind:this={mapContainer}>
+    {#if mapError}
+      <div class="absolute inset-0 z-50 flex items-center justify-center p-6 bg-surface-900">
+        <div class="max-w-md text-center rounded-lg border border-white/10 bg-surface-800 p-6 shadow-lg">
+          <h2 class="text-lg font-bold text-white mb-2">Map unavailable</h2>
+          <p class="text-sm text-surface-300">{mapError}</p>
+        </div>
+      </div>
+    {/if}
     <!-- Floating Insights Button -->
     {#if $financialStore.loadState === 'ready'}
       <button 
